@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skill Park | Leaderboard</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="leaderboard">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div>
+        <div class="brand-block">
+          <p class="brand-title">Skill Park</p>
+          <p class="brand-subtitle">Community learning progress in one simple view.</p>
+        </div>
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="welcome.html">Welcome Portal</a>
+          <a class="nav-link" href="student.html">Dashboard</a>
+          <a class="nav-link" href="subjects.html">Subjects / Academy</a>
+          <a class="nav-link" href="progress.html">Progress</a>
+          <a class="nav-link" href="quiz.html">Start Quiz</a>
+          <a class="nav-link active" href="leaderboard.html">Leaderboard</a>
+        </nav>
+      </div>
+      <button class="secondary-button wide-button" data-logout type="button">Logout</button>
+    </aside>
+
+    <main class="main-content">
+      <header class="page-header">
+        <div>
+          <h1>Skill Park Leaderboard</h1>
+          <p class="muted-text">Encourages participation while giving teachers quick visibility into student progress.</p>
+        </div>
+      </header>
+
+      <section class="content-grid two-column">
+        <article class="panel-card"><div class="section-heading"><div><h2>Top Learners</h2><p class="muted-text">A clean ranking view for classroom demo and student motivation.</p></div></div><div id="leaderboardTopList" class="stack-list"></div></article>
+        <article class="panel-card"><div class="section-heading"><div><h2>Performance Notes</h2><p class="muted-text">Simple observations based on quiz activity and XP trends.</p></div></div><div id="leaderboardInsightList" class="stack-list"></div></article>
+      </section>
+
+      <section class="panel-card">
+        <div class="section-heading"><div><h2>All Students</h2><p class="muted-text">Readable table with low visual noise.</p></div></div>
+        <div class="table-wrapper"><table class="data-table"><thead><tr><th>Rank</th><th>Name</th><th>School</th><th>Level</th><th>XP</th><th>Streak</th></tr></thead><tbody id="leaderboardTableBody"></tbody></table></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/pages/leaderboardPage.js"></script>
+</body>
+</html>
+

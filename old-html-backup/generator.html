@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skill Park | Question Generator</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="question-generator">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div>
+        <div class="brand-block">
+          <p class="brand-title">Skill Park</p>
+          <p class="brand-subtitle">LLM-assisted question creation with human review.</p>
+        </div>
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="teacher.html">Dashboard</a>
+          <a class="nav-link active" href="generator.html">Question Generator</a>
+          <a class="nav-link" href="question-bank.html">Question Bank</a>
+          <a class="nav-link" href="analytics.html">Analytics</a>
+        </nav>
+      </div>
+      <button class="secondary-button wide-button" data-logout type="button">Logout</button>
+    </aside>
+
+    <main class="main-content">
+      <header class="page-header">
+        <div>
+          <h1>Skill Park Question Generator</h1>
+          <p class="muted-text">Generate draft MCQs from a topic or lesson text, then edit, approve, and publish.</p>
+        </div>
+      </header>
+
+      <section class="content-grid two-column">
+        <article class="panel-card">
+          <div class="section-heading">
+            <div>
+              <h2>Generation Inputs</h2>
+              <p class="muted-text">Supports both mock generation and pluggable OpenAI-style API integration.</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <label class="field-label" for="generatorSubject">Subject</label>
+              <select id="generatorSubject" class="text-input"></select>
+            </div>
+            <div>
+              <label class="field-label" for="generatorClassLevel">Class Level</label>
+              <input id="generatorClassLevel" class="text-input" type="text" placeholder="Example: Class 6">
+            </div>
+            <div>
+              <label class="field-label" for="generatorDifficulty">Difficulty</label>
+              <select id="generatorDifficulty" class="text-input">
+                <option value="basic">Basic</option>
+                <option value="medium">Medium</option>
+                <option value="revision">Revision</option>
+                <option value="daily-practice">Daily Practice</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="generatorQuestionCount">Question Count</label>
+              <input id="generatorQuestionCount" class="text-input" type="number" min="3" max="10" value="5">
+            </div>
+          </div>
+
+          <label class="field-label" for="generatorTopic">Topic Name</label>
+          <input id="generatorTopic" class="text-input" type="text" placeholder="Example: Water Cycle">
+
+          <label class="field-label" for="generatorLessonText">Lesson Text</label>
+          <textarea id="generatorLessonText" class="text-area" placeholder="Paste lesson text or short explanation here."></textarea>
+
+          <div class="button-row">
+            <button id="generateQuestionsBtn" class="primary-button" type="button">Generate Questions</button>
+            <button id="loadSamplePromptBtn" class="secondary-button" type="button">Load Prompt Template</button>
+          </div>
+          <p id="generatorStatus" class="status-text" aria-live="polite"></p>
+        </article>
+
+        <article class="panel-card">
+          <div class="section-heading">
+            <div>
+              <h2>Prompt Template</h2>
+              <p class="muted-text">Used to guide the LLM toward simple, age-appropriate questions.</p>
+            </div>
+          </div>
+          <pre id="promptTemplatePreview" class="prompt-box"></pre>
+        </article>
+      </section>
+
+      <section class="panel-card">
+        <div class="section-heading">
+          <div>
+            <h2>Generated Questions</h2>
+            <p class="muted-text">Edit each card, approve or reject, and then publish the approved set.</p>
+          </div>
+          <button id="publishApprovedBtn" class="primary-button hidden" type="button">Publish Approved Questions</button>
+        </div>
+        <div id="generatedQuestionList" class="stack-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/pages/questionGeneratorPage.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skill Park | Welcome Portal</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="welcome-portal">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div>
+        <div class="brand-block">
+          <p class="brand-title">Skill Park</p>
+          <p class="brand-subtitle">A simple learning platform for rural students.</p>
+        </div>
+
+        <div class="profile-box">
+          <div class="profile-badge">SP</div>
+          <h2 id="portalStudentName">Student</h2>
+          <p id="portalStudentSchool" class="muted-on-dark">Village Learning Center</p>
+          <div class="mini-progress">
+            <div id="portalSidebarProgress" class="mini-progress-fill"></div>
+          </div>
+          <p id="portalSidebarLevel" class="muted-on-dark">Level 1</p>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link active" href="welcome.html">Welcome Portal</a>
+          <a class="nav-link" href="student.html">Dashboard</a>
+          <a class="nav-link" href="subjects.html">Subjects / Academy</a>
+          <a class="nav-link" href="progress.html">Progress</a>
+          <a class="nav-link" href="leaderboard.html">Leaderboard</a>
+        </nav>
+      </div>
+
+      <button class="secondary-button wide-button" data-logout type="button">Logout</button>
+    </aside>
+
+    <main class="main-content">
+      <header class="page-header">
+        <div>
+          <h1>Welcome to Skill Park</h1>
+          <p class="muted-text">A simple home portal with clear options so students can confidently choose what to do next.</p>
+        </div>
+      </header>
+
+      <section class="welcome-hero-grid">
+        <article class="panel-card welcome-hero-card">
+          <span class="soft-pill">Student Home</span>
+          <h2>Hello, <span id="portalWelcomeName">Student</span></h2>
+          <p class="muted-text">Choose one clear path to continue. Start a quiz, review your dashboard, explore subjects, or check progress and leaderboard.</p>
+          <div class="welcome-button-row">
+            <a class="primary-button" href="quiz.html">Start Quiz</a>
+            <a class="secondary-button" href="subjects.html">Explore Subjects</a>
+          </div>
+          <div id="portalSummaryList" class="welcome-summary-row"></div>
+        </article>
+
+        <aside class="panel-card welcome-side-card">
+          <h2>Today at a glance</h2>
+          <div class="mini-stat-grid">
+            <article class="mini-stat-card">
+              <span class="stat-label">XP</span>
+              <strong id="portalXp" class="stat-value">0</strong>
+            </article>
+            <article class="mini-stat-card">
+              <span class="stat-label">Level</span>
+              <strong id="portalLevel" class="stat-value">1</strong>
+            </article>
+            <article class="mini-stat-card">
+              <span class="stat-label">Streak</span>
+              <strong id="portalStreak" class="stat-value">0</strong>
+            </article>
+          </div>
+          <div class="welcome-side-note">
+            <strong>Simple steps</strong>
+            <p class="muted-text">Pick a section, complete one task, and return here anytime.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="panel-card portal-actions-section">
+        <div class="section-heading">
+          <div>
+            <h2>Main Navigation</h2>
+            <p class="muted-text">Clear beginner-friendly navigation. Quiz opens only when selected.</p>
+          </div>
+        </div>
+        <div class="portal-actions-grid" id="portalActionCards"></div>
+      </section>
+
+      <section class="portal-support-grid">
+        <article class="panel-card">
+          <div class="section-heading">
+            <div>
+              <h2>Daily Goals</h2>
+              <p class="muted-text">Short goals to keep the page focused and useful.</p>
+            </div>
+          </div>
+          <div id="portalGoalsList" class="stack-list"></div>
+        </article>
+
+        <article class="panel-card">
+          <div class="section-heading">
+            <div>
+              <h2>Recent Achievements</h2>
+              <p class="muted-text">Simple feedback to build confidence without crowding the page.</p>
+            </div>
+          </div>
+          <div id="portalAchievementsList" class="stack-list"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/pages/welcomePage.js"></script>
+</body>
+</html>
+

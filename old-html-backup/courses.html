@@ -1,0 +1,117 @@
+<div class="app">
+
+  <!-- 🌌 SIDEBAR -->
+  <aside class="sidebar modern">
+    <div class="logo">
+      <i class="fas fa-rocket"></i>
+      <span>Skill Park</span>
+    </div>
+
+    <div class="profile-box">
+      <img src="https://i.pravatar.cc/80">
+      <h3 id="userName">Player</h3>
+
+      <div class="xp-bar">
+        <div class="xp-fill" id="xpBar"></div>
+      </div>
+      <small><span id="xpText">0</span> XP</small>
+    </div>
+
+    <nav>
+      <a class="nav-link" href="home.html"><i class="fas fa-home"></i> Dashboard</a>
+      <a class="nav-link active" href="courses.html"><i class="fas fa-book"></i> Courses</a>
+      <a class="nav-link" href="quiz.html"><i class="fas fa-gamepad"></i> Quiz</a>
+      <a class="nav-link" href="leaderboard.html"><i class="fas fa-trophy"></i> Leaderboard</a>
+    </nav>
+
+    <div class="sidebar-box">
+      <h4>Daily Missions</h4>
+      <p>✅ Complete Quiz</p>
+      <p>🔥 Maintain Streak</p>
+    </div>
+
+    <div class="coins-box">💰 250 Coins</div>
+  </aside>
+
+  <!-- 📄 MAIN -->
+  <main class="modern-content">
+
+    <div class="content-wrapper">
+
+      <header class="user-header">
+        <h1>Explore Academy</h1>
+
+        <div class="filter-pills">
+          <button class="pill active">All</button>
+          <button class="pill">Science</button>
+          <button class="pill">Math</button>
+          <button class="pill">Tech</button>
+        </div>
+      </header>
+
+      <div class="courses-grid">
+
+        <!-- COURSE 1 -->
+        <div class="course-card" style="--delay: 0.1s">
+          <div class="course-banner science">
+            <i class="fas fa-atom"></i>
+          </div>
+          <div class="course-info">
+            <span class="tag">Beginner</span>
+            <h3>Quantum Physics Basics</h3>
+            <p>Explore the microscopic world of atoms.</p>
+            <div class="course-stats">
+              <span><i class="fas fa-play-circle"></i> 12 Lessons</span>
+              <span><i class="fas fa-star"></i> 4.8</span>
+            </div>
+            <button class="btn-course" onclick="startCourse('science-1')">
+              Enroll Now
+            </button>
+          </div>
+        </div>
+
+        <!-- COURSE 2 -->
+        <div class="course-card" style="--delay: 0.2s">
+          <div class="course-banner math">
+            <i class="fas fa-square-root-variable"></i>
+          </div>
+          <div class="course-info">
+            <span class="tag">Advanced</span>
+            <h3>Calculus Masterclass</h3>
+            <p>Master derivatives and integrals.</p>
+            <div class="course-stats">
+              <span><i class="fas fa-play-circle"></i> 20 Lessons</span>
+              <span><i class="fas fa-star"></i> 4.9</span>
+            </div>
+            <button class="btn-course" onclick="startCourse('math-1')">
+              Enroll Now
+            </button>
+          </div>
+        </div>
+
+        <!-- COURSE 3 -->
+        <div class="course-card" style="--delay: 0.3s">
+          <div class="course-banner tech">
+            <i class="fas fa-code"></i>
+          </div>
+          <div class="course-info">
+            <span class="tag">Intermediate</span>
+            <h3>Web Crafting (JS)</h3>
+            <p>Build modern UI like Skill Park.</p>
+            <div class="course-stats">
+              <span><i class="fas fa-play-circle"></i> 15 Lessons</span>
+              <span><i class="fas fa-star"></i> 5.0</span>
+            </div>
+            <button class="btn-course" onclick="startCourse('tech-1')">
+              Enroll Now
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>

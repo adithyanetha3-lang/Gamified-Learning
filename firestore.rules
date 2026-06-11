@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================================
+    // DEVELOPMENT RULES - ALLOWS ALL ACCESS
+    // ⚠️ USE THIS FOR DEVELOPMENT/TESTING
+    // ⚠️ COMMENT OUT AND USE PRODUCTION RULES BELOW FOR DEPLOYMENT
+    // ============================================================
+    
+    // Allow all read/write access for development
+    match /{document=**} {
+      allow read, write: if true;
+    }
+    
+    // ============================================================
+    // FOR PRODUCTION: Comment out the rule above and uncomment below
+    // ============================================================
+    
+    /*
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isTeacher() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+    
+    function isStudent() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Users collection - users can read/write their own data
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update, delete: if isOwner(userId) || isTeacher();
+    }
+    
+    // Subjects - teachers write, authenticated users read
+    match /subjects/{subjectId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isTeacher();
+    }
+    
+    // Topics - teachers write, authenticated users read
+    match /topics/{topicId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isTeacher();
+    }
+    
+    // Questions - teachers write, students read published only
+    match /questions/{questionId} {
+      allow read: if isAuthenticated() && 
+        (isTeacher() || resource.data.status == 'published');
+      allow create, update, delete: if isTeacher();
+    }
+    
+    // Quiz attempts - users can access their own attempts, teachers can see all
+    match /quizAttempts/{attemptId} {
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isTeacher());
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId;
+      allow delete: if isTeacher();
+    }
+    
+    // Progress - users access their own progress, teachers can see all
+    match /progress/{userId} {
+      allow read: if isAuthenticated() && 
+        (isOwner(userId) || isTeacher());
+      allow create, update: if isOwner(userId);
+      allow delete: if isTeacher();
+    }
+    
+    // Leaderboard - read only for authenticated users
+    match /leaderboard/{entryId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Updated via cloud functions or backend
+    }
+    
+    // Analytics - teachers only
+    match /analytics/{documentId} {
+      allow read, write: if isTeacher();
+    }
+    */
+  }
+}

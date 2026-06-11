@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skill Park | Analytics</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="analytics">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div>
+        <div class="brand-block">
+          <p class="brand-title">Skill Park</p>
+          <p class="brand-subtitle">Practical analytics for progress review and intervention.</p>
+        </div>
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="teacher.html">Dashboard</a>
+          <a class="nav-link" href="generator.html">Question Generator</a>
+          <a class="nav-link" href="question-bank.html">Question Bank</a>
+          <a class="nav-link active" href="analytics.html">Analytics</a>
+        </nav>
+      </div>
+      <button class="secondary-button wide-button" data-logout type="button">Logout</button>
+    </aside>
+
+    <main class="main-content">
+      <header class="page-header">
+        <div>
+          <h1>Skill Park Analytics</h1>
+          <p class="muted-text">A lightweight analytics view to support review meetings and classroom action.</p>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span class="stat-label">Total Students</span>
+          <strong id="analyticsStudentCount" class="stat-value">0</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Average XP</span>
+          <strong id="analyticsAverageXp" class="stat-value">0</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Average Accuracy</span>
+          <strong id="analyticsAverageAccuracy" class="stat-value">0%</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Highest Streak</span>
+          <strong id="analyticsBestStreak" class="stat-value">0</strong>
+        </article>
+      </section>
+
+      <section class="content-grid two-column">
+        <article class="panel-card">
+          <div class="section-heading">
+            <div>
+              <h2>Subject Performance</h2>
+              <p class="muted-text">Simple bars keep analytics readable without heavy charts.</p>
+            </div>
+          </div>
+          <div id="analyticsSubjectBars" class="stack-list"></div>
+        </article>
+
+        <article class="panel-card">
+          <div class="section-heading">
+            <div>
+              <h2>Actionable Observations</h2>
+              <p class="muted-text">Useful for teacher follow-up and demo explanation.</p>
+            </div>
+          </div>
+          <div id="analyticsObservationList" class="stack-list"></div>
+        </article>
+      </section>
+
+      <section class="panel-card">
+        <div class="section-heading">
+          <div>
+            <h2>Student Performance Table</h2>
+            <p class="muted-text">A compact view of progress and activity.</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>XP</th>
+                <th>Level</th>
+                <th>Streak</th>
+                <th>Accuracy</th>
+                <th>Completed Quizzes</th>
+              </tr>
+            </thead>
+            <tbody id="analyticsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/pages/analyticsPage.js"></script>
+</body>
+</html>
+

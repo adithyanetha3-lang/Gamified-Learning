@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skill Park | Teacher Dashboard</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="teacher-dashboard">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div>
+        <div class="brand-block">
+          <p class="brand-title">Skill Park</p>
+          <p class="brand-subtitle">Question publishing and performance management.</p>
+        </div>
+
+        <div class="profile-box">
+          <div class="profile-badge">TC</div>
+          <h2 id="teacherName">Teacher</h2>
+          <p id="teacherSchool" class="muted-on-dark">Village Learning Center</p>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link active" href="teacher.html">Dashboard</a>
+          <a class="nav-link" href="generator.html">Question Generator</a>
+          <a class="nav-link" href="question-bank.html">Question Bank</a>
+          <a class="nav-link" href="analytics.html">Analytics</a>
+          <a class="nav-link" href="leaderboard.html">Leaderboard</a>
+        </nav>
+      </div>
+
+      <button class="secondary-button wide-button" data-logout type="button">Logout</button>
+    </aside>
+
+    <main class="main-content">
+      <header class="page-header">
+        <div>
+          <h1>Skill Park Teacher Dashboard</h1>
+          <p class="muted-text">Manage subjects, review generated questions, add questions manually, and monitor student progress.</p>
+        </div>
+        <div class="header-actions">
+          <a class="primary-button" href="generator.html">Generate Questions</a>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <article class="stat-card"><span class="stat-label">Subjects</span><strong id="teacherSubjectsCount" class="stat-value">0</strong></article>
+        <article class="stat-card"><span class="stat-label">Published Questions</span><strong id="teacherPublishedCount" class="stat-value">0</strong></article>
+        <article class="stat-card"><span class="stat-label">Pending Review</span><strong id="teacherPendingCount" class="stat-value">0</strong></article>
+        <article class="stat-card"><span class="stat-label">Students Active</span><strong id="teacherActiveStudents" class="stat-value">0</strong></article>
+      </section>
+
+      <section class="content-grid two-column">
+        <article class="panel-card">
+          <div class="section-heading"><div><h2>Add Subject / Topic</h2><p class="muted-text">Supports future local language and curriculum expansion.</p></div></div>
+          <div class="form-grid">
+            <div><label class="field-label" for="teacherSubjectName">Subject</label><input id="teacherSubjectName" class="text-input" type="text" placeholder="Example: Environmental Science"></div>
+            <div><label class="field-label" for="teacherTopicName">Topic</label><input id="teacherTopicName" class="text-input" type="text" placeholder="Example: Safe Drinking Water"></div>
+          </div>
+          <button id="teacherAddTopicBtn" class="primary-button" type="button">Save Topic</button>
+          <p id="teacherTopicStatus" class="status-text" aria-live="polite"></p>
+        </article>
+
+        <article class="panel-card">
+          <div class="section-heading"><div><h2>Teacher Workflow</h2><p class="muted-text">The publishing flow keeps LLM output under teacher control.</p></div></div>
+          <div class="stack-list">
+            <div class="list-card">1. Enter topic, subject, class level, and difficulty.</div>
+            <div class="list-card">2. Generate draft questions using the LLM workflow.</div>
+            <div class="list-card">3. Edit or reject low-quality questions.</div>
+            <div class="list-card">4. Approve and publish only validated questions.</div>
+          </div>
+        </article>
+      </section>
+
+      <section class="content-grid two-column">
+        <article class="panel-card">
+          <div class="section-heading"><div><h2>Add Question Manually</h2><p class="muted-text">Teachers can also add questions directly without generation.</p></div></div>
+          <div class="form-grid">
+            <div><label class="field-label" for="manualQuestionSubject">Subject</label><input id="manualQuestionSubject" class="text-input" type="text" placeholder="Example: Mathematics"></div>
+            <div><label class="field-label" for="manualQuestionTopic">Topic</label><input id="manualQuestionTopic" class="text-input" type="text" placeholder="Example: Fractions"></div>
+          </div>
+          <label class="field-label" for="manualQuestionText">Question</label>
+          <input id="manualQuestionText" class="text-input" type="text" placeholder="Enter the question text">
+          <div class="form-grid">
+            <div><label class="field-label" for="manualOption1">Option 1</label><input id="manualOption1" class="text-input" type="text"></div>
+            <div><label class="field-label" for="manualOption2">Option 2</label><input id="manualOption2" class="text-input" type="text"></div>
+            <div><label class="field-label" for="manualOption3">Option 3</label><input id="manualOption3" class="text-input" type="text"></div>
+            <div><label class="field-label" for="manualOption4">Option 4</label><input id="manualOption4" class="text-input" type="text"></div>
+          </div>
+          <label class="field-label" for="manualCorrectAnswer">Correct Answer Index</label>
+          <select id="manualCorrectAnswer" class="text-input"><option value="0">Option 1</option><option value="1">Option 2</option><option value="2">Option 3</option><option value="3">Option 4</option></select>
+          <button id="manualQuestionBtn" class="primary-button" type="button">Publish Manual Question</button>
+          <p id="manualQuestionStatus" class="status-text" aria-live="polite"></p>
+        </article>
+
+        <article class="panel-card">
+          <div class="section-heading"><div><h2>Recent Topics</h2><p class="muted-text">Quick access to recently saved topics for question generation.</p></div></div>
+          <div id="teacherTopicList" class="stack-list"></div>
+        </article>
+      </section>
+
+      <section class="content-grid two-column">
+        <article class="panel-card">
+          <div class="section-heading"><div><h2>Quick Summary</h2><p class="muted-text">For demo presentation and stakeholder explanation.</p></div></div>
+          <div id="teacherSummaryList" class="stack-list"></div>
+        </article>
+
+        <article class="panel-card">
+          <div class="section-heading"><div><h2>Teacher Notes</h2><p class="muted-text">Simple talking points for the mini-project presentation.</p></div></div>
+          <div class="stack-list">
+            <div class="list-card">The welcome portal avoids confusion by not starting a quiz immediately after login.</div>
+            <div class="list-card">Question generation reduces manual work for teachers, but approval remains human-controlled.</div>
+            <div class="list-card">The interface is lightweight and suitable for rural usability needs.</div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/pages/teacherDashboardPage.js"></script>
+</body>
+</html>
+

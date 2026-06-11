@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skill Park | Progress</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="progress">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div>
+        <div class="brand-block">
+          <p class="brand-title">Skill Park</p>
+          <p class="brand-subtitle">Readable progress tracking for students and teachers.</p>
+        </div>
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="welcome.html">Welcome Portal</a>
+          <a class="nav-link" href="student.html">Dashboard</a>
+          <a class="nav-link" href="subjects.html">Subjects / Academy</a>
+          <a class="nav-link active" href="progress.html">Progress</a>
+          <a class="nav-link" href="leaderboard.html">Leaderboard</a>
+        </nav>
+      </div>
+      <button class="secondary-button wide-button" data-logout type="button">Logout</button>
+    </aside>
+
+    <main class="main-content">
+      <header class="page-header">
+        <div>
+          <h1>Progress Tracking</h1>
+          <p class="muted-text">Clear progress details without complex charts or crowded layouts.</p>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span class="stat-label">Total XP</span>
+          <strong id="progressXp" class="stat-value">0</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Current Level</span>
+          <strong id="progressLevel" class="stat-value">1</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Quizzes Completed</span>
+          <strong id="progressQuizzes" class="stat-value">0</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Accuracy</span>
+          <strong id="progressAccuracy" class="stat-value">0%</strong>
+        </article>
+      </section>
+
+      <section class="content-grid two-column">
+        <article class="panel-card">
+          <div class="section-heading">
+            <div>
+              <h2>Subject Progress</h2>
+              <p class="muted-text">Simple visual bars that load quickly even on low-end devices.</p>
+            </div>
+          </div>
+          <div id="progressSubjectBars" class="stack-list"></div>
+        </article>
+
+        <article class="panel-card">
+          <div class="section-heading">
+            <div>
+              <h2>Recent Progress Notes</h2>
+              <p class="muted-text">Readable summary of learning movement over time.</p>
+            </div>
+          </div>
+          <div id="progressNotesList" class="stack-list"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/pages/progressPage.js"></script>
+</body>
+</html>
+

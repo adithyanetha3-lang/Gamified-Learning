@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <h2 class="logo">🎮 Learner</h2>
+
+  <a href="dashboard.html" class="nav-item active"><span>🏠</span><p>Dashboard</p></a>
+  <a href="quiz.html" class="nav-item"><span>🎮</span><p>Quiz</p></a>
+  <a href="leaderboard.html" class="nav-item"><span>🏆</span><p>Leaderboard</p></a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<h1>Welcome 👋</h1>
+
+<div class="cards">
+  <div class="card big"><h3>🔥 Points</h3><p id="points">0</p></div>
+  <div class="card big"><h3>🎯 Level</h3><p id="level">1</p></div>
+  <div class="card big"><h3>⚡ Streak</h3><p id="streak">0</p></div>
+</div>
+
+<div class="card full">
+  <h3>📈 Progress</h3>
+  <div class="progress-bar"><div id="progress"></div></div>
+</div>
+
+<div class="card full">
+  <h3>📊 Performance</h3>
+  <canvas id="chart"></canvas>
+</div>
+
+<div class="card full">
+  <h3>📜 Activity</h3>
+  <ul id="activity"></ul>
+</div>
+
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
