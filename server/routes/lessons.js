@@ -57,7 +57,7 @@ router.post("/generate", async (request, response, next) => {
 });
 
 function buildLessonPrompt(payload) {
-  return `You are an expert educational content writer. Create a comprehensive, engaging lesson for students.
+  return `You are an expert educational content writer. Create an engaging, visual lesson for students.
 
 TOPIC: ${payload.topic}
 SUBJECT: ${payload.subject}
@@ -65,51 +65,47 @@ DESCRIPTION: ${payload.description}
 DIFFICULTY: ${payload.difficulty}
 TARGET AUDIENCE: ${payload.classLevel} students
 
-Create a detailed lesson that includes:
+Create a modern, engaging lesson with emojis and visual elements:
 
-1. INTRODUCTION (2-3 paragraphs)
-   - Hook to engage students
-   - Overview of what they'll learn
-   - Why this topic matters
+1. 🎯 INTRODUCTION (Brief - 2-3 sentences)
+   - Quick hook to grab attention
+   - What they'll master
 
-2. KEY CONCEPTS (4-6 sections)
-   - Clear explanations of main ideas
+2. 📚 KEY CONCEPTS (3-4 main points)
+   - Use emojis for each point
+   - Clear, simple explanations
    - Real-world examples
-   - Visual descriptions where helpful
-   - Break complex ideas into simpler parts
 
-3. DETAILED EXPLANATION
+3. 💡 CORE IDEAS
    - Step-by-step breakdown
-   - Examples with explanations
-   - Common misconceptions to avoid
-   - Tips for understanding
+   - Practical examples
+   - Visual descriptions with emojis
 
-4. PRACTICAL APPLICATIONS
-   - How this applies in real life
-   - Interesting facts or connections
-   - Career relevance if applicable
+4. 🌍 REAL-WORLD USE
+   - How this applies in life
+   - Interesting connections
+   - Career relevance
 
-5. SUMMARY
-   - Key takeaways
-   - What students should remember
-   - Preparation for quiz
+5. ✅ KEY TAKEAWAYS (Bullet points)
+   - 3-5 main points to remember
+   - Quiz preparation tips
 
-WRITING STYLE:
-- Clear and conversational
+STYLE:
+- Conversational and engaging
+- Use emojis generously (🎓📊🔬💻🎨🌟✨🚀🎯💡📈🔍⚡)
+- Short paragraphs (2-3 sentences max)
 - Age-appropriate for ${payload.classLevel}
-- Engaging and interesting
-- Use analogies and examples
-- Break into clear sections with headings
+- Break into clear sections with emoji headings
 
-LENGTH: Aim for 800-1200 words - comprehensive but not overwhelming
+LENGTH: 400-600 words - concise but complete
 
-FORMATTING:
-- Use clear headings for sections
-- Write in proper paragraphs
-- No markdown formatting (plain text with spacing)
-- Use line breaks between sections
+FORMAT:
+- Use emoji headings for each section
+- Short, punchy paragraphs
+- Bullet points where helpful
+- Line breaks between sections
 
-Generate the lesson content now:`;
+Generate the lesson NOW:`;
 }
 
 async function generateLessonContent(payload, prompt) {
@@ -179,7 +175,7 @@ async function callLLMForLesson(provider, prompt) {
       messages: [
         {
           role: "system",
-          content: "You are an expert educational content writer specializing in creating comprehensive, engaging lessons for students. Write clear, well-structured content that helps students understand and remember key concepts.",
+          content: "You are an expert educational content writer. Create concise, engaging lessons with emojis and visual elements. Keep it brief but comprehensive.",
         },
         {
           role: "user",
@@ -187,7 +183,7 @@ async function callLLMForLesson(provider, prompt) {
         },
       ],
       temperature: 0.7,
-      max_tokens: 2500,
+      max_tokens: 1500, // Reduced for faster generation
     }),
   });
 
@@ -202,73 +198,71 @@ async function callLLMForLesson(provider, prompt) {
 }
 
 function createMockLesson(payload) {
-  const content = `${payload.topic}
+  const content = `🎯 ${payload.topic}
 
-Introduction
+📖 Introduction
 
 ${payload.description}
 
-This topic is an important part of ${payload.subject} and helps build a strong foundation for further learning. Understanding these concepts will help you in many real-world situations and prepare you for more advanced topics.
+This is a key part of ${payload.subject} that you'll use throughout your learning journey! 🚀
 
-Key Concepts
+📚 Key Concepts
 
-The main ideas you need to understand in this topic include:
+✨ **Foundation Basics**
+Every topic starts with fundamentals. These are your building blocks. Master these first!
 
-1. Basic Foundations
-Every topic starts with fundamental concepts. These are the building blocks that everything else is built upon. Take time to understand these thoroughly before moving to more complex ideas.
+💡 **Core Principles**  
+Understanding WHY things work helps you remember better than just memorizing facts.
 
-2. Core Principles
-The core principles help you understand why things work the way they do. These are not just facts to memorize, but ideas to truly comprehend and apply.
+🌟 **Practical Applications**
+See how this connects to real life - that's when learning really sticks!
 
-3. Practical Applications
-Learning becomes more meaningful when you see how it applies to real life. This topic has many practical uses that you encounter regularly.
+🔍 Deep Dive
 
-Detailed Explanation
+Let's break it down:
 
-Let's break down the key points:
+${payload.topic} connects to many concepts in ${payload.subject}. When you understand this well, other topics become much easier! 
 
-First, understand that ${payload.topic} is connected to many other concepts in ${payload.subject}. When you learn this well, it makes other topics easier to understand.
+Think of it like learning to ride a bike - once you get the basics, everything else flows naturally. 🚴‍♂️
 
-The main idea is to grasp the fundamental concepts and then build upon them. Don't rush - take time to understand each part before moving to the next.
+💡 Examples & Tips
 
-Examples and Practice
+Here's how to think about this:
 
-Here are some ways to think about this topic:
+• 🎯 **Example 1:** Look for this concept in your daily life
+• 💼 **Example 2:** Professionals use this knowledge constantly  
+• 🔗 **Example 3:** Connect it to what you already know
 
-- Example 1: Consider everyday situations where you might encounter these concepts
-- Example 2: Think about how professionals use this knowledge in their work
-- Example 3: Connect it to other things you've already learned
+⚠️ Common Mistakes
 
-Common Misconceptions
+Watch out for these:
 
-Many students make similar mistakes when learning ${payload.topic}:
+• ❌ Rushing without understanding basics
+• ❌ Memorizing instead of comprehending
+• ❌ Not practicing with examples
 
-- Misconception 1: Rushing through without understanding the basics
-- Misconception 2: Trying to memorize instead of understanding
-- Misconception 3: Not practicing enough with examples
+Take your time and think actively! 🤔
 
-Avoid these by taking your time and actively thinking about what you're learning.
+🌍 Real-World Uses
 
-Real-World Applications
+You'll encounter this when:
 
-This topic is useful in many situations:
+• Making everyday decisions 🏠
+• Understanding how things work 🔬
+• Building your career skills 💼
+• Solving practical problems 🛠️
 
-- In daily life, you might use these concepts when...
-- Professionals in various fields apply this knowledge to...
-- Understanding this helps you make better decisions about...
+✅ Key Takeaways
 
-Summary and Key Takeaways
+Remember these important points:
 
-The most important things to remember about ${payload.topic}:
+🎯 Master the foundations first
+📝 Practice makes perfect  
+🔗 Connect new ideas to what you know
+❓ Ask questions when unclear
+🎓 You're ready for the quiz!
 
-1. Understand the basic foundations before moving to complex ideas
-2. Practice applying what you learn
-3. Connect new concepts to things you already know
-4. Ask questions when something isn't clear
-
-Now that you've learned about ${payload.topic}, you're ready to test your understanding with a quiz. Review the key concepts above and make sure you feel confident before starting the quiz.
-
-Good luck!`;
+Great job learning ${payload.topic}! Now test your knowledge with the quiz. Good luck! 🌟`;
 
   return {
     content,

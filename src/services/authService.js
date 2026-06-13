@@ -12,6 +12,7 @@ import {
   updateDoc
 } from "firebase/firestore";
 import { auth, db } from "../firebase/config";
+import { initializeProgress } from "./progressService";
 
 const USERS_COLLECTION = "users";
 
@@ -60,24 +61,72 @@ export async function signUpWithEmail({ name, email, password, role }) {
     emailOrId: email
   });
 
+  // Initialize progress for students
+  if (role === 'student') {
+    try {
+      await initializeProgress(credentials.user.uid, name);
+      console.log("Progress initialized for new student");
+    } catch (error) {
+      console.error("Failed to initialize progress:", error);
+    }
+  }
+
   return credentials.user;
 }
 
 export async function signInWithEmail({ name, email, password, role }) {
   const credentials = await signInWithEmailAndPassword(auth, email, password);
 
-  if (name && credentials.user.displayName !== name) {
+  // Get the actual user profile from Firestore
+  const existingProfile = await getUserProfile(credentials.user.uid);
+  
+  if (!existingProfile) {
+    // New user - should not happen during sign in, but handle it
+    throw new Error("User profile not found. Please sign up first.");
+  }
+
+  // Use the role from the database, NOT the one from the form
+  const actualRole = existingProfile.role;
+  const actualName = name || existingProfile.name || credentials.user.displayName || "User";
+
+  // Verify that the role matches what the user selected
+  if (role && role !== actualRole) {
+    // User tried to login with wrong role
+    await signOut(auth);
+    throw new Error(`This account is registered as a ${actualRole}. Please select the correct role.`);
+  }
+
+  // Update profile with actual stored role
+  if (actualName && credentials.user.displayName !== actualName) {
     await updateProfile(credentials.user, {
-      displayName: name
+      displayName: actualName
     });
   }
 
-  await saveUserProfile({
-    uid: credentials.user.uid,
-    name: name || credentials.user.displayName || "Skill Park User",
-    role,
-    emailOrId: email
-  });
+  // Update last login info asynchronously (don't wait)
+  updateDoc(doc(db, USERS_COLLECTION, credentials.user.uid), {
+    name: actualName,
+    role: actualRole,
+    emailOrId: email,
+    updatedAt: serverTimestamp(),
+    lastLoginAt: serverTimestamp()
+  }).catch(err => console.error("Failed to update login timestamp:", err));
+
+  // Initialize progress for students asynchronously (don't block signin)
+  if (actualRole === 'student') {
+    import('./progressService').then(async ({ getUserProgress, initializeProgress: initProg }) => {
+      try {
+        let progress = await getUserProgress(credentials.user.uid);
+        if (progress && progress.userName === "Student") {
+          await initProg(credentials.user.uid, actualName);
+          console.log(`Progress name updated to: ${actualName}`);
+        }
+        console.log("Student progress check:", progress ? "exists" : "initialized");
+      } catch (error) {
+        console.error("Failed to check/initialize progress:", error);
+      }
+    });
+  }
 
   return credentials.user;
 }
@@ -88,6 +137,16 @@ export async function signOutUser() {
 
 export function getFriendlyFirebaseError(error) {
   const code = error?.code || "";
+  const message = error?.message || "";
+
+  // Handle custom role mismatch error
+  if (message.includes("registered as a")) {
+    return message;
+  }
+
+  if (message.includes("User profile not found")) {
+    return message;
+  }
 
   if (code.includes("email-already-in-use")) {
     return "This email is already registered. Please sign in instead.";
