@@ -20,6 +20,7 @@ const QuestionGeneratorPage = lazy(() => import("../pages/QuestionGeneratorPage"
 const QuestionBankPage = lazy(() => import("../pages/QuestionBankPage"));
 const AnalyticsPage = lazy(() => import("../pages/AnalyticsPage"));
 const SubjectManagementPage = lazy(() => import("../pages/SubjectManagementPage"));
+const DebugProgressPage = lazy(() => import("../pages/DebugProgressPage"));
 
 // Loading fallback
 function PageLoader() {
@@ -183,6 +184,14 @@ function AppRouter() {
           element={
             <RoleRoute allowedRoles={["teacher"]}>
               <SubjectManagementPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="/debug-progress"
+          element={
+            <RoleRoute allowedRoles={["teacher"]}>
+              <DebugProgressPage />
             </RoleRoute>
           }
         />

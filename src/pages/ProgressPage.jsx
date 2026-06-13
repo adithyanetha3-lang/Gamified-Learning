@@ -25,16 +25,23 @@ function ProgressPage() {
       setLoading(true);
       setError(null);
       
+      logger.info("Loading progress for user:", profile.uid);
+      
       const [progressData, statsData] = await Promise.all([
-        getUserProgress(profile.uid),
-        getUserQuizStats(profile.uid),
+        getUserProgress(profile.uid, profile.name || "Student"),
+        getUserQuizStats(profile.uid).catch(err => {
+          logger.error("Quiz stats failed, using empty:", err);
+          return { totalAttempts: 0, averageScore: 0, totalCorrect: 0, totalQuestions: 0 };
+        }),
       ]);
       
+      logger.info("Progress loaded:", progressData);
       setProgress(progressData);
       setQuizStats(statsData);
     } catch (err) {
       logger.error("Error loading progress:", err);
-      setError("Failed to load progress. Please try again.");
+      console.error("Progress page error details:", err);
+      setError(`Failed to load progress: ${err.message}`);
     } finally {
       setLoading(false);
     }

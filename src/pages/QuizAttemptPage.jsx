@@ -116,6 +116,8 @@ function QuizAttemptPage() {
       // Complete quiz and get results
       const quizResults = await completeQuiz(attemptId, profile.uid);
       
+      logger.info("Quiz completed, updating progress...", quizResults);
+      
       // Update student progress
       await updateTopicProgress(
         profile.uid,
@@ -126,8 +128,11 @@ function QuizAttemptPage() {
         quizResults.totalQuestions
       );
       
+      logger.info("Topic progress updated");
+      
       // Add XP to student
-      await addXP(profile.uid, quizResults.xpEarned, "quiz");
+      const xpResult = await addXP(profile.uid, quizResults.xpEarned, "quiz");
+      logger.info("XP added:", xpResult);
       
       // Update subject progress
       await updateSubjectProgress(
@@ -137,12 +142,15 @@ function QuizAttemptPage() {
         quizResults.xpEarned
       );
       
+      logger.info("Subject progress updated");
+      
       setResults(quizResults);
       setCompleted(true);
       
     } catch (err) {
       logger.error("Error submitting quiz:", err);
-      alert("Failed to submit quiz. Please try again.");
+      console.error("Quiz submission error details:", err);
+      alert(`Failed to submit quiz: ${err.message}. Please try again.`);
     } finally {
       setSubmitting(false);
     }

@@ -17,6 +17,7 @@ function QuestionBankPage() {
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState('subjects'); // 'subjects', 'topics', 'questions'
 
   useEffect(() => {
     loadSubjects();
@@ -25,12 +26,14 @@ function QuestionBankPage() {
   useEffect(() => {
     if (selectedSubject) {
       loadTopics(selectedSubject);
+      setView('topics');
     }
   }, [selectedSubject]);
 
   useEffect(() => {
     if (selectedTopic) {
       loadQuestions(selectedTopic);
+      setView('questions');
     }
   }, [selectedTopic]);
 
@@ -39,9 +42,7 @@ function QuestionBankPage() {
       setLoading(true);
       const data = await getAllSubjects();
       setSubjects(data);
-      if (data.length > 0) {
-        setSelectedSubject(data[0].id);
-      }
+      // Don't auto-select - let teacher choose
     } catch (err) {
       logger.error("Error loading subjects:", err);
     } finally {
@@ -53,9 +54,9 @@ function QuestionBankPage() {
     try {
       const data = await getTopicsBySubject(subjectId);
       setTopics(data);
-      if (data.length > 0) {
-        setSelectedTopic(data[0].id);
-      }
+      // Don't auto-select - let teacher choose
+      setSelectedTopic(null); // Clear any previous topic selection
+      setQuestions([]); // Clear questions when changing subject
     } catch (err) {
       logger.error("Error loading topics:", err);
     }
@@ -121,102 +122,185 @@ function QuestionBankPage() {
         subtitle="Review, approve, and publish quiz questions"
       />
 
-      <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: "2rem", marginTop: "2rem" }}>
-        {/* Sidebar */}
-        <div>
-          {/* Subject Selector */}
-          <div style={{ marginBottom: "2rem" }}>
-            <h3 style={{ fontSize: "0.875rem", fontWeight: "600", marginBottom: "0.75rem", color: "#718096" }}>
-              SUBJECT
-            </h3>
+      {/* Breadcrumb Navigation */}
+      {(selectedSubject || selectedTopic) && (
+        <div style={{ marginTop: "1.5rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem" }}>
+          <button
+            onClick={() => {
+              setSelectedSubject(null);
+              setSelectedTopic(null);
+              setView('subjects');
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#3182ce",
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontSize: "0.875rem"
+            }}
+          >
+            All Subjects
+          </button>
+          {selectedSubject && (
+            <>
+              <span style={{ color: "#718096" }}>›</span>
+              <button
+                onClick={() => {
+                  setSelectedTopic(null);
+                  setView('topics');
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: selectedTopic ? "#3182ce" : "#2d3748",
+                  cursor: selectedTopic ? "pointer" : "default",
+                  textDecoration: selectedTopic ? "underline" : "none",
+                  fontSize: "0.875rem",
+                  fontWeight: selectedTopic ? "normal" : "600"
+                }}
+              >
+                {subjects.find(s => s.id === selectedSubject)?.name || 'Subject'}
+              </button>
+            </>
+          )}
+          {selectedTopic && (
+            <>
+              <span style={{ color: "#718096" }}>›</span>
+              <span style={{ color: "#2d3748", fontWeight: "600" }}>
+                {topics.find(t => t.id === selectedTopic)?.name || 'Topic'}
+              </span>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Subjects View - Card Grid */}
+      {view === 'subjects' && (
+        <div style={{ marginTop: "2rem" }}>
+          <h3 style={{ fontSize: "1.125rem", fontWeight: "600", marginBottom: "1.5rem", color: "#2d3748" }}>
+            Select a Subject
+          </h3>
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", 
+            gap: "1.5rem" 
+          }}>
             {subjects.map(subject => (
               <div
                 key={subject.id}
                 onClick={() => setSelectedSubject(subject.id)}
                 style={{
-                  padding: "0.75rem 1rem",
-                  background: selectedSubject === subject.id 
-                    ? "linear-gradient(135deg, #ffffff, #f7fafc)"
-                    : "#2d3748",
-                  border: selectedSubject === subject.id ? "2px solid #3182ce" : "2px solid #4a5568",
-                  borderRadius: "10px",
+                  padding: "2rem",
+                  backgroundColor: "#ffffff",
+                  border: "2px solid #e2e8f0",
+                  borderRadius: "16px",
                   cursor: "pointer",
-                  marginBottom: "0.5rem",
-                  fontWeight: selectedSubject === subject.id ? "700" : "500",
-                  color: selectedSubject === subject.id ? "#1a202c" : "#e2e8f0",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  transition: "all 0.2s",
-                  boxShadow: selectedSubject === subject.id ? "0 4px 12px rgba(49, 130, 206, 0.3)" : "none"
+                  transition: "all 0.3s",
+                  textAlign: "center"
                 }}
                 onMouseEnter={(e) => {
-                  if (selectedSubject !== subject.id) {
-                    e.currentTarget.style.background = "#374151";
-                    e.currentTarget.style.borderColor = "#6b7280";
-                  }
+                  e.currentTarget.style.transform = "translateY(-8px)";
+                  e.currentTarget.style.borderColor = "#3182ce";
+                  e.currentTarget.style.boxShadow = "0 12px 24px rgba(49, 130, 206, 0.2)";
                 }}
                 onMouseLeave={(e) => {
-                  if (selectedSubject !== subject.id) {
-                    e.currentTarget.style.background = "#2d3748";
-                    e.currentTarget.style.borderColor = "#4a5568";
-                  }
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.borderColor = "#e2e8f0";
+                  e.currentTarget.style.boxShadow = "none";
                 }}
               >
-                <span style={{ fontSize: "1.25rem" }}>{subject.icon}</span>
-                <span>{subject.name}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Topic Selector */}
-          <div>
-            <h3 style={{ fontSize: "0.875rem", fontWeight: "600", marginBottom: "0.75rem", color: "#718096" }}>
-              TOPIC
-            </h3>
-            {topics.map(topic => (
-              <div
-                key={topic.id}
-                onClick={() => setSelectedTopic(topic.id)}
-                style={{
-                  padding: "0.75rem 1rem",
-                  background: selectedTopic === topic.id 
-                    ? "linear-gradient(135deg, #ffffff, #f7fafc)"
-                    : "#2d3748",
-                  border: selectedTopic === topic.id ? "2px solid #38a169" : "2px solid #4a5568",
-                  borderRadius: "10px",
-                  cursor: "pointer",
-                  marginBottom: "0.5rem",
-                  fontSize: "0.875rem",
-                  fontWeight: selectedTopic === topic.id ? "700" : "500",
-                  color: selectedTopic === topic.id ? "#1a202c" : "#e2e8f0",
-                  transition: "all 0.2s",
-                  boxShadow: selectedTopic === topic.id ? "0 4px 12px rgba(56, 161, 105, 0.3)" : "none"
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedTopic !== topic.id) {
-                    e.currentTarget.style.background = "#374151";
-                    e.currentTarget.style.borderColor = "#6b7280";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedTopic !== topic.id) {
-                    e.currentTarget.style.background = "#2d3748";
-                    e.currentTarget.style.borderColor = "#4a5568";
-                  }
-                }}
-              >
-                {topic.name}
+                <div style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>{subject.icon}</div>
+                <h4 style={{ fontSize: "1.125rem", fontWeight: "600", marginBottom: "0.5rem", color: "#2d3748" }}>
+                  {subject.name}
+                </h4>
+                <p style={{ fontSize: "0.875rem", color: "#718096", marginBottom: "1rem" }}>
+                  {subject.description || 'Click to view topics'}
+                </p>
+                <div style={{ fontSize: "0.75rem", color: "#a0aec0" }}>
+                  {subject.topicCount || 0} topics
+                </div>
               </div>
             ))}
           </div>
         </div>
+      )}
 
-        {/* Questions List */}
-        <div>
+      {/* Topics View - Card Grid */}
+      {view === 'topics' && selectedSubject && (
+        <div style={{ marginTop: "2rem" }}>
+          <h3 style={{ fontSize: "1.125rem", fontWeight: "600", marginBottom: "1.5rem", color: "#2d3748" }}>
+            Select a Topic
+          </h3>
+          {topics.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "3rem", backgroundColor: "#f7f9fc", borderRadius: "12px" }}>
+              <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📑</div>
+              <p style={{ color: "#718096" }}>No topics available for this subject.</p>
+            </div>
+          ) : (
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", 
+              gap: "1.5rem" 
+            }}>
+              {topics.map(topic => (
+                <div
+                  key={topic.id}
+                  onClick={() => setSelectedTopic(topic.id)}
+                  style={{
+                    padding: "1.5rem",
+                    backgroundColor: "#ffffff",
+                    border: "2px solid #e2e8f0",
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    transition: "all 0.3s"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.borderColor = "#38a169";
+                    e.currentTarget.style.boxShadow = "0 8px 16px rgba(56, 161, 105, 0.2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.borderColor = "#e2e8f0";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "start", gap: "1rem" }}>
+                    <div style={{ fontSize: "2rem" }}>📑</div>
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ fontSize: "1rem", fontWeight: "600", marginBottom: "0.5rem", color: "#2d3748" }}>
+                        {topic.name}
+                      </h4>
+                      <p style={{ fontSize: "0.875rem", color: "#718096", marginBottom: "0.75rem" }}>
+                        {topic.description || 'Click to view questions'}
+                      </p>
+                      <div style={{ display: "flex", gap: "1rem", fontSize: "0.75rem", color: "#a0aec0" }}>
+                        <span>Difficulty: {topic.difficulty}</span>
+                        <span>•</span>
+                        <span>{topic.questionCount || 0} questions</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Questions View - List */}
+      {view === 'questions' && selectedTopic && (
+        <div style={{ marginTop: "2rem" }}>
           {questions.length === 0 ? (
             <div style={{ textAlign: "center", padding: "3rem", backgroundColor: "#f7f9fc", borderRadius: "12px" }}>
-              <p style={{ color: "#718096" }}>No questions found for this topic.</p>
+              <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📝</div>
+              <p style={{ color: "#718096", marginBottom: "0.5rem" }}>
+                No questions found for this topic.
+              </p>
+              <p style={{ color: "#a0aec0", fontSize: "0.875rem" }}>
+                Go to the Generate page to create questions with AI
+              </p>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -334,7 +418,7 @@ function QuestionBankPage() {
             </div>
           )}
         </div>
-      </div>
+      )}
     </AppShell>
   );
 }

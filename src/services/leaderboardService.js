@@ -14,17 +14,16 @@ const PROGRESS_COLLECTION = "progress";
  */
 export async function getGlobalLeaderboard(limitCount = 50) {
   try {
+    // Simple query - sort by XP only (no composite index needed)
     return await firestore.getDocuments(
       PROGRESS_COLLECTION,
       [],
-      [
-        { field: "xp", direction: "desc" },
-        { field: "level", direction: "desc" },
-      ],
+      [{ field: "xp", direction: "desc" }],
       limitCount
     );
   } catch (error) {
     logger.error("Error getting global leaderboard:", error);
+    console.error("Leaderboard error details:", error);
     throw error;
   }
 }
@@ -39,17 +38,16 @@ export async function getWeeklyLeaderboard(limitCount = 50) {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const dateStr = sevenDaysAgo.toISOString().split('T')[0];
     
+    // Simple query - single sort field
     return await firestore.getDocuments(
       PROGRESS_COLLECTION,
       [{ field: "lastActivityDate", operator: ">=", value: dateStr }],
-      [
-        { field: "xp", direction: "desc" },
-        { field: "level", direction: "desc" },
-      ],
+      [{ field: "xp", direction: "desc" }],
       limitCount
     );
   } catch (error) {
     logger.error("Error getting weekly leaderboard:", error);
+    console.error("Weekly leaderboard error:", error);
     throw error;
   }
 }
@@ -159,17 +157,16 @@ export async function getSubjectLeaderboard(subjectId, limitCount = 50) {
  */
 export async function getStreakLeaderboard(limitCount = 50) {
   try {
+    // Simple query - single sort
     return await firestore.getDocuments(
       PROGRESS_COLLECTION,
       [{ field: "streak", operator: ">", value: 0 }],
-      [
-        { field: "streak", direction: "desc" },
-        { field: "xp", direction: "desc" },
-      ],
+      [{ field: "streak", direction: "desc" }],
       limitCount
     );
   } catch (error) {
     logger.error("Error getting streak leaderboard:", error);
+    console.error("Streak leaderboard error:", error);
     throw error;
   }
 }
@@ -179,10 +176,7 @@ export async function getStreakLeaderboard(limitCount = 50) {
  */
 export function subscribeToLeaderboard(callback, limitCount = 50) {
   const filters = [];
-  const sorts = [
-    { field: "xp", direction: "desc" },
-    { field: "level", direction: "desc" },
-  ];
+  const sorts = [{ field: "xp", direction: "desc" }]; // Single sort only
   
   return firestore.subscribeToCollection(
     PROGRESS_COLLECTION,

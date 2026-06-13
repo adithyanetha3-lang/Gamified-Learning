@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import InfoPanel from "../components/InfoPanel";
 import MainSection from "../components/MainSection";
 import OptionGrid from "../components/OptionGrid";
@@ -6,14 +7,16 @@ import PageHeader from "../components/PageHeader";
 import QuickActionPanel from "../components/QuickActionPanel";
 import SummaryBar from "../components/SummaryBar";
 import AppShell from "../components/AppShell";
-import { DASHBOARD_CONFIG } from "../data/dashboardConfig";
+import { useDashboardConfig } from "../hooks/useDashboardConfig";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { getUserProgress } from "../services/progressService";
 import { getUserQuizStats } from "../services/quizService";
 import { getDocuments } from "../services/firestoreService";
 
 function Home() {
+  const { t } = useTranslation();
   const { profile } = useAuthSession();
+  const dashboardConfig = useDashboardConfig();
   const [progress, setProgress] = useState(null);
   const [quizStats, setQuizStats] = useState(null);
   const [teacherStats, setTeacherStats] = useState(null);
@@ -31,9 +34,22 @@ function Home() {
       
       if (profile.role === "student") {
         const [progressData, statsData] = await Promise.all([
-          getUserProgress(profile.uid),
+          getUserProgress(profile.uid, profile.name || "Student"),
           getUserQuizStats(profile.uid)
         ]);
+        
+        // Auto-fix progress name if it's showing as "Student"
+        if (progressData && progressData.userName === "Student" && profile.name && profile.name !== "Student") {
+          try {
+            const { fixUserProgressName } = await import("../services/fixProgressNames");
+            await fixUserProgressName(profile.uid, profile.name);
+            console.log(`✅ Auto-fixed progress name to: ${profile.name}`);
+            progressData.userName = profile.name; // Update local state
+          } catch (err) {
+            console.error("Failed to auto-fix progress name:", err);
+          }
+        }
+        
         setProgress(progressData);
         setQuizStats(statsData);
       } else if (profile.role === "teacher") {
@@ -65,33 +81,33 @@ function Home() {
     return null;
   }
 
-  const roleConfig = DASHBOARD_CONFIG[profile.role] || DASHBOARD_CONFIG.student;
+  const roleConfig = dashboardConfig[profile.role] || dashboardConfig.student;
   const firstName = profile.name?.split(" ")[0] || "Learner";
 
   function buildSummary() {
     if (profile.role === "teacher" && teacherStats) {
       return [
-        { label: "Students", value: teacherStats.students, tone: "accent" },
-        { label: "Subjects", value: teacherStats.subjects, tone: "default" },
-        { label: "Published", value: teacherStats.publishedQuestions, tone: "default" },
-        { label: "Drafts", value: teacherStats.draftQuestions, tone: "default" }
+        { label: t('analytics.totalStudents'), value: teacherStats.students, tone: "accent" },
+        { label: t('navigation.subjects'), value: teacherStats.subjects, tone: "default" },
+        { label: t('questionBank.published'), value: teacherStats.publishedQuestions, tone: "default" },
+        { label: t('questionBank.draft'), value: teacherStats.draftQuestions, tone: "default" }
       ];
     }
 
     if (progress) {
       return [
-        { label: "Level", value: progress.level, tone: "accent" },
-        { label: "XP", value: progress.xp, tone: "default" },
-        { label: "Streak", value: `${progress.streak} 🔥`, tone: "default" },
-        { label: "Quizzes", value: progress.totalQuizzes, tone: "default" }
+        { label: t('dashboard.level'), value: progress.level, tone: "accent" },
+        { label: t('dashboard.xp'), value: progress.xp, tone: "default" },
+        { label: t('dashboard.streak'), value: `${progress.streak} 🔥`, tone: "default" },
+        { label: t('dashboard.quizzes'), value: progress.totalQuizzes, tone: "default" }
       ];
     }
 
     return [
-      { label: "Level", value: 1, tone: "accent" },
-      { label: "XP", value: 0, tone: "default" },
-      { label: "Streak", value: 0, tone: "default" },
-      { label: "Quizzes", value: 0, tone: "default" }
+      { label: t('dashboard.level'), value: 1, tone: "accent" },
+      { label: t('dashboard.xp'), value: 0, tone: "default" },
+      { label: t('dashboard.streak'), value: 0, tone: "default" },
+      { label: t('dashboard.quizzes'), value: 0, tone: "default" }
     ];
   }
 
@@ -125,7 +141,7 @@ function Home() {
       <AppShell profile={profile}>
         <div style={{ textAlign: "center", padding: "4rem 2rem" }}>
           <div className="spinner"></div>
-          <p>Loading...</p>
+          <p>{t('common.loading')}</p>
         </div>
       </AppShell>
     );
@@ -135,25 +151,25 @@ function Home() {
     <AppShell profile={profile}>
       <PageHeader
         eyebrow={roleConfig.header.eyebrow}
-        title={profile.role === "teacher" ? "Teacher Dashboard" : `Welcome, ${firstName}`}
+        title={profile.role === "teacher" ? t('dashboard.teacherDashboard') : `${t('dashboard.welcome')}, ${firstName}`}
         subtitle={roleConfig.header.subtitle}
       />
 
       <SummaryBar items={buildSummary()} />
 
-      <MainSection title="Explore" meta="Main Options">
+      <MainSection title={t('dashboard.explore')} meta="Main Options">
         <OptionGrid items={roleConfig.options} />
       </MainSection>
 
-      <MainSection title="Quick Actions" meta="Shortcuts">
+      <MainSection title={t('dashboard.quickActions')} meta="Shortcuts">
         <QuickActionPanel actions={roleConfig.actions} />
       </MainSection>
 
       <section className="info-grid">
-        <MainSection title="Recent" meta="Now">
+        <MainSection title={t('dashboard.recent')} meta="Now">
           <InfoPanel items={buildUpdates()} />
         </MainSection>
-        <MainSection title="Next" meta="Focus">
+        <MainSection title={t('dashboard.next')} meta="Focus">
           <InfoPanel items={buildTasks()} />
         </MainSection>
       </section>

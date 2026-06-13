@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import AppRouter from "./routes/AppRouter";
 import ErrorBoundary from "./utils/errorBoundary";
+import "./i18n/config"; // Initialize i18n
 
 // Loading fallback component
 function AppLoader() {

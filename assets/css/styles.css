@@ -1,5 +1,6 @@
-﻿:root {
-  color-scheme: light dark;
+﻿/* Theme Variables - Light Mode Only */
+:root {
+  color-scheme: light;
   --bg: #f4f6f8;
   --surface: #ffffff;
   --surface-soft: #f8fafc;
@@ -20,25 +21,15 @@
   font-family: "Segoe UI", Arial, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b1220;
-    --surface: #121c2f;
-    --surface-soft: #152238;
-    --line: #283548;
-    --text: #e8eef5;
-    --muted: #a7b5c5;
-    --primary: #60a5fa;
-    --primary-soft: #1e3a5f;
-    --secondary: #34d399;
-    --sidebar: #08101d;
-    --sidebar-text: #d9e6f3;
-    --shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
-  }
+* { 
+  box-sizing: border-box; 
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); }
+body { 
+  margin: 0; 
+  background: var(--bg); 
+  color: var(--text);
+}
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
 button { border: 0; }

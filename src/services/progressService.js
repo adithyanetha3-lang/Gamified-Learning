@@ -13,18 +13,22 @@ const COLLECTION_NAME = "progress";
 /**
  * Get user progress
  */
-export async function getUserProgress(userId) {
+export async function getUserProgress(userId, userName = "Student") {
   try {
+    logger.info(`Getting progress for user ${userId}`);
     let progress = await firestore.getDocument(COLLECTION_NAME, userId);
     
     // Initialize if doesn't exist
     if (!progress) {
-      progress = await initializeProgress(userId);
+      logger.info(`No progress found for user ${userId}, initializing with name: ${userName}`);
+      progress = await initializeProgress(userId, userName);
     }
     
+    logger.info(`Progress retrieved for user ${userId}:`, progress);
     return progress;
   } catch (error) {
     logger.error(`Error getting progress for user ${userId}:`, error);
+    console.error("getUserProgress error details:", error);
     throw error;
   }
 }
@@ -34,6 +38,8 @@ export async function getUserProgress(userId) {
  */
 export async function initializeProgress(userId, userName = "Student") {
   try {
+    logger.info(`Initializing progress for user ${userId}, name: ${userName}`);
+    
     const initialProgress = {
       userId,
       userName,
@@ -49,12 +55,16 @@ export async function initializeProgress(userId, userName = "Student") {
       createdAt: serverTimestamp(),
     };
     
+    logger.info("Creating progress document with data:", initialProgress);
     await firestore.setDocument(COLLECTION_NAME, userId, initialProgress, false);
     
-    logger.info(`Progress initialized for user ${userId}`);
+    logger.info(`✅ Progress initialized successfully for user ${userId}`);
+    console.log(`✅ Progress initialized for ${userName} (${userId})`);
+    
     return { id: userId, ...initialProgress };
   } catch (error) {
-    logger.error(`Error initializing progress for user ${userId}:`, error);
+    logger.error(`❌ Error initializing progress for user ${userId}:`, error);
+    console.error("initializeProgress error details:", error);
     throw error;
   }
 }

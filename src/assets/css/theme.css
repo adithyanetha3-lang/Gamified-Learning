@@ -1,0 +1,278 @@
+/* Theme Transitions and Additional Styling */
+
+/* Apply smooth transitions to all themed elements */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+.app-shell {
+  background-color: var(--bg);
+}
+
+/* Top Navigation */
+.top-nav {
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.top-nav__link {
+  color: var(--muted);
+}
+
+.top-nav__link--active {
+  color: var(--primary);
+}
+
+.top-nav__mark {
+  background-color: var(--primary);
+  color: white;
+}
+
+.role-pill {
+  background-color: var(--surface-soft);
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.ghost-button {
+  color: var(--text);
+  border: 1px solid var(--line);
+  background-color: transparent;
+}
+
+.ghost-button:hover {
+  background-color: var(--surface-soft);
+}
+
+/* Cards and containers */
+.panel-card,
+.info-card,
+.stat-card,
+.tip-card,
+.list-card,
+.subject-card,
+.question-card,
+.leaderboard-card,
+.activity-item,
+.observation-card,
+.welcome-hero-card,
+.welcome-side-card,
+.mini-stat-card,
+.action-tile {
+  background-color: var(--surface);
+  border-color: var(--line);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.subject-card,
+.question-card,
+.leaderboard-card,
+.mini-stat-card {
+  background-color: var(--surface-soft);
+}
+
+/* Forms and inputs */
+input,
+select,
+textarea,
+.text-input,
+.text-area {
+  background-color: var(--surface);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.text-input:focus,
+.text-area:focus {
+  border-color: var(--primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+}
+
+/* Buttons */
+.primary-button,
+.role-button.active {
+  background-color: var(--primary);
+  color: white;
+}
+
+.secondary-button,
+.role-button {
+  background-color: var(--surface-soft);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.option-button {
+  background-color: var(--surface);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+/* Sidebar */
+.sidebar {
+  background-color: var(--sidebar);
+  color: var(--sidebar-text);
+}
+
+.nav-link {
+  color: var(--sidebar-text);
+}
+
+.nav-link.active,
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Text colors */
+.hero-copy,
+.muted-text,
+.helper-text,
+.status-text,
+.brand-subtitle {
+  color: var(--muted);
+}
+
+.stat-label {
+  color: var(--muted);
+}
+
+/* Tables */
+.data-table th,
+.data-table td {
+  border-bottom-color: var(--line);
+}
+
+.data-table th {
+  color: var(--muted);
+}
+
+/* Pills and badges */
+.pill {
+  background-color: var(--primary-soft);
+  color: var(--primary);
+}
+
+.soft-pill,
+.meta-tag {
+  background-color: var(--surface-soft);
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.badge-chip {
+  background-color: var(--primary-soft);
+  color: var(--primary);
+}
+
+/* Progress bars */
+.mini-progress,
+.progress-bar {
+  background-color: var(--surface-soft);
+  border-color: var(--line);
+}
+
+.mini-progress-fill,
+.progress-fill {
+  background-color: var(--primary);
+}
+
+/* Auth panel */
+.auth-panel {
+  background-color: var(--surface-soft);
+}
+
+/* Prompt box */
+.prompt-box {
+  background-color: var(--surface-soft);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+/* Profile box */
+.profile-box {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme="dark"] .profile-box {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.profile-badge {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme="dark"] .profile-badge {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Welcome summary row */
+.welcome-summary-row .meta-tag {
+  background-color: var(--surface);
+}
+
+/* Hover states */
+.action-tile:hover {
+  border-color: var(--primary);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-soft);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Dark mode specific adjustments */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"] .mini-progress {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .nav-link.active,
+:root[data-theme="dark"] .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Ensure images don't get inverted in dark mode */
+:root[data-theme="dark"] img {
+  filter: none;
+}
+
+/* Quiz options in dark mode */
+:root[data-theme="dark"] .option-button.correct {
+  border-color: var(--success);
+  background-color: rgba(72, 187, 120, 0.15);
+}
+
+:root[data-theme="dark"] .option-button.incorrect {
+  border-color: var(--danger);
+  background-color: rgba(252, 129, 129, 0.15);
+}

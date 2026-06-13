@@ -39,10 +39,18 @@ function Auth() {
         role: formValues.role
       });
 
+      // For sign in, get the actual role from Firestore
+      let actualRole = formValues.role;
+      if (mode === "signin") {
+        const { getUserProfile } = await import("../services/authService");
+        const profile = await getUserProfile(user.uid);
+        actualRole = profile?.role || formValues.role;
+      }
+
       saveAuthProfile({
         uid: user.uid,
         name: formValues.name.trim(),
-        role: formValues.role,
+        role: actualRole, // Use the actual role from database
         emailOrId: formValues.email.trim()
       });
 

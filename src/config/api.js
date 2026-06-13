@@ -60,6 +60,17 @@ export const api = {
   },
   
   /**
+   * Generate lesson content using LLM
+   */
+  async generateLesson(payload) {
+    return apiClient("/api/lessons/generate", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      timeout: 60000, // 1 minute for LLM generation
+    });
+  },
+  
+  /**
    * Health check
    */
   async health() {

@@ -3,6 +3,7 @@ import AppShell from "../components/AppShell";
 import PageHeader from "../components/PageHeader";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { getGlobalLeaderboard, getUserRank } from "../services/leaderboardService";
+import { getDocuments } from "../services/firestoreService";
 import { createLogger } from "../utils/logger";
 
 const logger = createLogger("LeaderboardPage");
@@ -23,12 +24,27 @@ function LeaderboardPage() {
       setLoading(true);
       setError(null);
       
-      const [leaderboardData, rankData] = await Promise.all([
+      const [leaderboardData, rankData, allUsers] = await Promise.all([
         getGlobalLeaderboard(50),
         profile?.uid ? getUserRank(profile.uid) : null,
+        getDocuments("users"), // Fetch all users to get real names
       ]);
       
-      setLeaderboard(leaderboardData);
+      // Create a map of userId to userName from users collection
+      const userNameMap = {};
+      allUsers.forEach(user => {
+        userNameMap[user.uid] = user.name || user.displayName || "Student";
+      });
+      
+      // Replace "Student" names with actual names from users collection
+      const enhancedLeaderboard = leaderboardData.map(student => ({
+        ...student,
+        userName: student.userName === "Student" && userNameMap[student.userId] 
+          ? userNameMap[student.userId]
+          : student.userName
+      }));
+      
+      setLeaderboard(enhancedLeaderboard);
       setUserRank(rankData);
     } catch (err) {
       logger.error("Error loading leaderboard:", err);

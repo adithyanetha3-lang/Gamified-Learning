@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import TopNav from "./TopNav";
-import { DASHBOARD_CONFIG } from "../data/dashboardConfig";
+import AIChatbot from "./AIChatbot";
+import { useDashboardConfig } from "../hooks/useDashboardConfig";
 import { signOutUser } from "../services/authService";
 import { clearAuthProfile } from "../services/localStorageService";
 
 function AppShell({ profile, children }) {
   const navigate = useNavigate();
+  const dashboardConfig = useDashboardConfig();
 
   async function handleLogout() {
     await signOutUser();
@@ -19,9 +21,10 @@ function AppShell({ profile, children }) {
         title="Skill Park"
         role={profile.role}
         onLogout={handleLogout}
-        navItems={DASHBOARD_CONFIG[profile.role]?.navItems || []}
+        navItems={dashboardConfig[profile.role]?.navItems || []}
       />
       <div className="app-container">{children}</div>
+      <AIChatbot />
     </main>
   );
 }

@@ -16,6 +16,7 @@ import {
   deleteTopic,
   toggleTopicPublish 
 } from "../services/topicService";
+import api from "../config/api";
 import { createLogger } from "../utils/logger";
 
 const logger = createLogger("SubjectManagementPage");
@@ -30,6 +31,8 @@ function SubjectManagementPage() {
   const [showTopicForm, setShowTopicForm] = useState(false);
   const [generatingLesson, setGeneratingLesson] = useState(false);
   const [error, setError] = useState(null);
+  const [viewingLesson, setViewingLesson] = useState(null); // For viewing lesson content
+  const [previewLesson, setPreviewLesson] = useState(null); // For previewing generated lesson before saving
 
   const [subjectForm, setSubjectForm] = useState({
     name: "",
@@ -171,37 +174,27 @@ function SubjectManagementPage() {
       const subjectName = selectedSubjectData?.name || "General";
       
       // Call backend to generate lesson content
-      const response = await fetch("http://localhost:3000/api/lessons/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          subject: subjectName,
-          topic: topicForm.name,
-          description: topicForm.description,
-          difficulty: topicForm.difficulty,
-        }),
+      const data = await api.generateLesson({
+        subject: subjectName,
+        topic: topicForm.name,
+        description: topicForm.description,
+        difficulty: topicForm.difficulty,
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate lesson");
-      }
-
-      const data = await response.json();
       
       if (data.success && data.data.content) {
         setTopicForm({
           ...topicForm,
           lessonText: data.data.content,
         });
-        alert("✨ Lesson content generated successfully!");
+        // Show preview modal
+        setPreviewLesson(data.data.content);
+        alert("✨ Lesson content generated successfully! Click 'Preview Lesson' to view it.");
       } else {
         throw new Error("Invalid response from server");
       }
     } catch (err) {
       logger.error("Error generating lesson:", err);
-      alert("Failed to generate lesson. Make sure the backend is running on port 3000.");
+      alert("Failed to generate lesson. Please try again.");
     } finally {
       setGeneratingLesson(false);
     }
@@ -457,6 +450,34 @@ function SubjectManagementPage() {
                           </p>
                         </div>
                         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                          <button
+                            onClick={() => setViewingLesson(topic)}
+                            disabled={!topic.lessonText}
+                            style={{
+                              padding: "0.5rem 1rem",
+                              background: topic.lessonText
+                                ? "linear-gradient(135deg, #4299e1, #3182ce)" 
+                                : "#cbd5e0",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: topic.lessonText ? "pointer" : "not-allowed",
+                              fontSize: "0.875rem",
+                              fontWeight: "600",
+                              transition: "all 0.2s",
+                              opacity: topic.lessonText ? 1 : 0.6
+                            }}
+                            onMouseEnter={(e) => {
+                              if (topic.lessonText) {
+                                e.currentTarget.style.transform = "scale(1.05)";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "scale(1)";
+                            }}
+                          >
+                            📖 View Lesson
+                          </button>
                           <button
                             onClick={() => handleToggleTopicPublish(topic.id, topic.published)}
                             style={{
@@ -717,16 +738,42 @@ function SubjectManagementPage() {
                     fontFamily: "inherit"
                   }}
                 />
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem", gap: "0.5rem" }}>
                   <div style={{ fontSize: "0.75rem", color: "#718096" }}>
                     💡 This is what students will see in the "Learn" section
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleGenerateLesson}
-                    disabled={!topicForm.name || !topicForm.description || generatingLesson}
-                    style={{
-                      padding: "0.5rem 1rem",
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    {topicForm.lessonText && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewLesson(topicForm.lessonText)}
+                        style={{
+                          padding: "0.5rem 1rem",
+                          background: "linear-gradient(135deg, #4299e1, #3182ce)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontSize: "0.75rem",
+                          fontWeight: "600",
+                          transition: "all 0.2s"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "scale(1.05)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "scale(1)";
+                        }}
+                      >
+                        👁️ Preview Lesson
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleGenerateLesson}
+                      disabled={!topicForm.name || !topicForm.description || generatingLesson}
+                      style={{
+                        padding: "0.5rem 1rem",
                       background: (!topicForm.name || !topicForm.description || generatingLesson) 
                         ? "#e2e8f0"
                         : "linear-gradient(135deg, #8b5cf6, #7c3aed)",
@@ -749,6 +796,7 @@ function SubjectManagementPage() {
                   >
                     {generatingLesson ? "⏳ Generating..." : "✨ Generate Lesson with AI"}
                   </button>
+                  </div>
                 </div>
               </div>
               <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
@@ -785,6 +833,230 @@ function SubjectManagementPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Lesson Viewer Modal */}
+      {viewingLesson && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "2rem"
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            borderRadius: "16px",
+            padding: "2rem",
+            maxWidth: "800px",
+            width: "100%",
+            maxHeight: "80vh",
+            overflowY: "auto",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.3)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "1.5rem" }}>
+              <div>
+                <h2 style={{ fontSize: "1.75rem", fontWeight: "700", marginBottom: "0.5rem", color: "#2d3748" }}>
+                  📖 {viewingLesson.name}
+                </h2>
+                <p style={{ fontSize: "0.875rem", color: "#718096" }}>
+                  {viewingLesson.description}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingLesson(null)}
+                style={{
+                  background: "#e2e8f0",
+                  color: "#2d3748",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "40px",
+                  height: "40px",
+                  cursor: "pointer",
+                  fontSize: "1.25rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#cbd5e0";
+                  e.currentTarget.style.transform = "scale(1.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#e2e8f0";
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{
+              padding: "1.5rem",
+              backgroundColor: "#f7f9fc",
+              borderRadius: "12px",
+              border: "1px solid #e2e8f0",
+              lineHeight: "1.8",
+              fontSize: "1rem",
+              color: "#2d3748",
+              whiteSpace: "pre-wrap"
+            }}>
+              {viewingLesson.lessonText || "No lesson content available."}
+            </div>
+
+            <div style={{
+              marginTop: "1.5rem",
+              padding: "1rem",
+              backgroundColor: "#edf2f7",
+              borderRadius: "8px",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem"
+            }}>
+              <span style={{ fontSize: "1.25rem" }}>ℹ️</span>
+              <div style={{ fontSize: "0.875rem", color: "#4a5568" }}>
+                This is the lesson content that students will see when they visit the "Learn" page.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lesson Preview Modal (for generated content) */}
+      {previewLesson && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1100,
+          padding: "2rem"
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            borderRadius: "16px",
+            padding: "2.5rem",
+            maxWidth: "900px",
+            width: "100%",
+            maxHeight: "85vh",
+            overflowY: "auto",
+            boxShadow: "0 25px 70px rgba(0,0,0,0.4)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem", paddingBottom: "1rem", borderBottom: "2px solid #e2e8f0" }}>
+              <div>
+                <h2 style={{ fontSize: "2rem", fontWeight: "700", marginBottom: "0.5rem", color: "#2d3748" }}>
+                  📚 Lesson Preview
+                </h2>
+                <p style={{ fontSize: "0.875rem", color: "#718096" }}>
+                  Review the AI-generated lesson content
+                </p>
+              </div>
+              <button
+                onClick={() => setPreviewLesson(null)}
+                style={{
+                  background: "#e2e8f0",
+                  color: "#2d3748",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "44px",
+                  height: "44px",
+                  cursor: "pointer",
+                  fontSize: "1.5rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s",
+                  fontWeight: "600"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#cbd5e0";
+                  e.currentTarget.style.transform = "rotate(90deg) scale(1.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#e2e8f0";
+                  e.currentTarget.style.transform = "rotate(0deg) scale(1)";
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{
+              padding: "2rem",
+              backgroundColor: "#f7fafc",
+              borderRadius: "12px",
+              border: "2px solid #e2e8f0",
+              lineHeight: "1.9",
+              fontSize: "1.05rem",
+              color: "#2d3748",
+              whiteSpace: "pre-wrap",
+              fontFamily: "inherit"
+            }}>
+              {previewLesson}
+            </div>
+
+            <div style={{
+              marginTop: "2rem",
+              padding: "1.25rem",
+              backgroundColor: "#dbeafe",
+              borderRadius: "10px",
+              border: "1px solid #93c5fd",
+              display: "flex",
+              alignItems: "start",
+              gap: "1rem"
+            }}>
+              <span style={{ fontSize: "1.5rem" }}>💡</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: "0.875rem", fontWeight: "600", color: "#1e40af", marginBottom: "0.25rem" }}>
+                  Content Generated Successfully
+                </div>
+                <div style={{ fontSize: "0.875rem", color: "#1e3a8a" }}>
+                  This lesson content has been saved to the form. You can edit it further in the textarea above, or click "Create" to save the topic with this lesson.
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+              <button
+                onClick={() => setPreviewLesson(null)}
+                style={{
+                  padding: "0.75rem 2rem",
+                  background: "linear-gradient(135deg, #3182ce, #2c5aa0)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  boxShadow: "0 4px 12px rgba(49, 130, 206, 0.3)",
+                  transition: "all 0.2s"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(49, 130, 206, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(49, 130, 206, 0.3)";
+                }}
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}
