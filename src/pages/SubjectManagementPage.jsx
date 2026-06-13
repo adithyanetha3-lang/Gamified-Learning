@@ -33,6 +33,7 @@ function SubjectManagementPage() {
   const [error, setError] = useState(null);
   const [viewingLesson, setViewingLesson] = useState(null); // For viewing lesson content
   const [previewLesson, setPreviewLesson] = useState(null); // For previewing generated lesson before saving
+  const [view, setView] = useState('subjects'); // 'subjects' or 'topics'
 
   const [subjectForm, setSubjectForm] = useState({
     name: "",
@@ -55,6 +56,9 @@ function SubjectManagementPage() {
   useEffect(() => {
     if (selectedSubject) {
       loadTopics(selectedSubject);
+      setView('topics');
+    } else {
+      setView('subjects');
     }
   }, [selectedSubject]);
 
@@ -63,9 +67,7 @@ function SubjectManagementPage() {
       setLoading(true);
       const data = await getAllSubjects();
       setSubjects(data);
-      if (data.length > 0 && !selectedSubject) {
-        setSelectedSubject(data[0].id);
-      }
+      // Don't auto-select first subject - let teacher choose
     } catch (err) {
       logger.error("Error loading subjects:", err);
       setError("Failed to load subjects");
@@ -219,10 +221,36 @@ function SubjectManagementPage() {
         subtitle="Create and organize your curriculum"
       />
 
-      {/* Subject List and Topic Management */}
-      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "2rem", marginTop: "2rem" }}>
-        {/* Subjects Sidebar */}
-        <div>
+      {/* Breadcrumb Navigation */}
+      {selectedSubject && (
+        <div style={{ marginTop: "1.5rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem" }}>
+          <button
+            onClick={() => {
+              setSelectedSubject(null);
+              setView('subjects');
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#3182ce",
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontSize: "0.875rem",
+              padding: "0.25rem 0.5rem"
+            }}
+          >
+            All Subjects
+          </button>
+          <span style={{ color: "#718096" }}>›</span>
+          <span style={{ color: "#2d3748", fontWeight: "600" }}>
+            {subjects.find(s => s.id === selectedSubject)?.name || 'Subject'}
+          </span>
+        </div>
+      )}
+
+      {/* Subjects View - Card Grid */}
+      {view === 'subjects' && (
+        <div style={{ marginTop: "2rem" }}>
           <div style={{ 
             display: "flex", 
             justifyContent: "space-between", 
@@ -231,7 +259,9 @@ function SubjectManagementPage() {
             paddingBottom: "0.75rem",
             borderBottom: "2px solid #e2e8f0"
           }}>
-            <h3 style={{ fontSize: "1.25rem", fontWeight: "700", color: "#2d3748" }}>📚 Subjects</h3>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: "700", color: "#2d3748" }}>
+              📚 All Subjects
+            </h3>
             <button
               onClick={() => setShowSubjectForm(true)}
               style={{
@@ -259,384 +289,340 @@ function SubjectManagementPage() {
             </button>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {subjects.map((subject) => (
-              <div
-                key={subject.id}
-                onClick={() => setSelectedSubject(subject.id)}
-                style={{
-                  padding: "1.25rem",
-                  background: "#ffffff",
-                  border: `3px solid ${selectedSubject === subject.id ? (subject.color || "#3182ce") : "#e2e8f0"}`,
-                  borderRadius: "12px",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                  boxShadow: selectedSubject === subject.id ? `0 6px 16px ${subject.color || "#3182ce"}40` : "0 2px 8px rgba(0,0,0,0.08)",
-                  transform: selectedSubject === subject.id ? "translateY(-4px)" : "translateY(0)"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow = `0 6px 16px ${subject.color || "#3182ce"}30`;
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedSubject !== subject.id) {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
-                  }
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
-                  <div style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: "12px",
-                    background: `linear-gradient(135deg, ${subject.color || "#3182ce"}, ${subject.color || "#3182ce"}dd)`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "1.5rem",
-                    boxShadow: `0 4px 8px ${subject.color || "#3182ce"}30`
-                  }}>
-                    {subject.icon}
-                  </div>
-                  <span style={{ fontWeight: "600", flex: 1, fontSize: "1rem", color: "#2d3748" }}>{subject.name}</span>
-                </div>
-                <div style={{ fontSize: "0.75rem", color: "#718096", marginBottom: "0.75rem", paddingLeft: "0.5rem" }}>
-                  📚 {subject.topicCount || 0} topics • {subject.questionCount || 0} questions
-                </div>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleSubjectPublish(subject.id, subject.published);
-                    }}
-                    style={{
-                      padding: "0.5rem 1rem",
-                      background: subject.published 
-                        ? "linear-gradient(135deg, #48bb78, #38a169)" 
-                        : "linear-gradient(135deg, #667eea, #764ba2)",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontSize: "0.75rem",
-                      fontWeight: "600",
-                      boxShadow: subject.published 
-                        ? "0 2px 8px rgba(72, 187, 120, 0.3)" 
-                        : "0 2px 8px rgba(102, 126, 234, 0.3)",
-                      transition: "all 0.2s",
-                      flex: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "0.25rem"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "scale(1.05)";
-                      e.currentTarget.style.boxShadow = subject.published 
-                        ? "0 4px 12px rgba(72, 187, 120, 0.4)" 
-                        : "0 4px 12px rgba(102, 126, 234, 0.4)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.boxShadow = subject.published 
-                        ? "0 2px 8px rgba(72, 187, 120, 0.3)" 
-                        : "0 2px 8px rgba(102, 126, 234, 0.3)";
-                    }}
-                  >
-                    {subject.published ? "✓ Published" : "📝 Draft"}
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm(`Delete "${subject.name}"? This will also delete all its topics and questions.`)) {
-                        handleDeleteSubject(subject.id);
-                      }
-                    }}
-                    style={{
-                      padding: "0.4rem 0.75rem",
-                      background: "linear-gradient(135deg, #f56565, #e53e3e)",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontSize: "0.75rem",
-                      fontWeight: "600",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                      transition: "all 0.2s"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "scale(1.05)";
-                      e.currentTarget.style.background = "linear-gradient(135deg, #e53e3e, #c53030)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.background = "linear-gradient(135deg, #f56565, #e53e3e)";
-                    }}
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Topics for Selected Subject */}
-        <div>
-          {selectedSubject && (
-            <>
-              <div style={{ 
-                display: "flex", 
-                justifyContent: "space-between", 
-                alignItems: "center", 
-                marginBottom: "1.5rem",
-                paddingBottom: "0.75rem",
-                borderBottom: "2px solid #e2e8f0"
-              }}>
-                <h3 style={{ fontSize: "1.25rem", fontWeight: "700", color: "#2d3748" }}>
-                  📑 Topics ({topics.length})
-                </h3>
-                <button
-                  onClick={() => setShowTopicForm(true)}
+          {subjects.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "3rem", backgroundColor: "#f7f9fc", borderRadius: "12px" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📚</div>
+              <p style={{ color: "#718096" }}>No subjects yet. Create your first subject!</p>
+            </div>
+          ) : (
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", 
+              gap: "1.5rem" 
+            }}>
+              {subjects.map(subject => (
+                <div
+                  key={subject.id}
+                  onClick={() => setSelectedSubject(subject.id)}
                   style={{
-                    padding: "0.625rem 1.25rem",
-                    background: "linear-gradient(135deg, #38a169, #2f855a)",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
+                    padding: "2rem",
+                    backgroundColor: "#ffffff",
+                    border: "3px solid #e2e8f0",
+                    borderRadius: "16px",
                     cursor: "pointer",
-                    fontSize: "0.875rem",
-                    fontWeight: "600",
-                    boxShadow: "0 4px 8px rgba(56, 161, 105, 0.3)",
-                    transition: "all 0.2s"
+                    transition: "all 0.3s ease"
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 6px 12px rgba(56, 161, 105, 0.4)";
+                    e.currentTarget.style.transform = "translateY(-8px)";
+                    e.currentTarget.style.borderColor = subject.color || "#3182ce";
+                    e.currentTarget.style.boxShadow = `0 12px 24px ${subject.color || "#3182ce"}40`;
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 4px 8px rgba(56, 161, 105, 0.3)";
+                    e.currentTarget.style.borderColor = "#e2e8f0";
+                    e.currentTarget.style.boxShadow = "none";
                   }}
                 >
-                  ➕ Add Topic
-                </button>
-              </div>
+                  <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+                    <div style={{
+                      width: "80px",
+                      height: "80px",
+                      margin: "0 auto",
+                      borderRadius: "20px",
+                      background: `linear-gradient(135deg, ${subject.color || "#3182ce"}, ${subject.color || "#3182ce"}dd)`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "3rem",
+                      boxShadow: `0 8px 16px ${subject.color || "#3182ce"}30`,
+                      marginBottom: "1rem"
+                    }}>
+                      {subject.icon}
+                    </div>
+                    <h4 style={{ fontSize: "1.25rem", fontWeight: "700", marginBottom: "0.5rem", color: "#2d3748" }}>
+                      {subject.name}
+                    </h4>
+                    <p style={{ fontSize: "0.875rem", color: "#718096", marginBottom: "1rem", minHeight: "40px" }}>
+                      {subject.description || 'Click to manage topics'}
+                    </p>
+                  </div>
 
-              {topics.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "3rem", backgroundColor: "#f7f9fc", borderRadius: "12px" }}>
-                  <p style={{ color: "#718096" }}>No topics yet. Create your first topic!</p>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  {topics.map((topic) => (
-                    <div
-                      key={topic.id}
-                      style={{
-                        padding: "1.5rem",
-                        backgroundColor: "#ffffff",
-                        border: "2px solid #e2e8f0",
-                        borderRadius: "12px"
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "0.75rem" }}>
-                        <div style={{ flex: 1 }}>
-                          <h4 style={{ fontSize: "1.125rem", fontWeight: "600", marginBottom: "0.25rem" }}>
-                            {topic.name}
-                          </h4>
-                          <p style={{ fontSize: "0.875rem", color: "#718096" }}>
-                            {topic.description}
-                          </p>
+                  <div style={{ 
+                    padding: "1rem", 
+                    backgroundColor: "#f7fafc", 
+                    borderRadius: "12px", 
+                    marginBottom: "1rem",
+                    border: "1px solid #e2e8f0"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-around", fontSize: "0.875rem" }}>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: "1.5rem", fontWeight: "700", color: subject.color || "#3182ce" }}>
+                          {subject.topicCount || 0}
                         </div>
-                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                          <button
-                            onClick={() => setViewingLesson(topic)}
-                            disabled={!topic.lessonText}
-                            style={{
-                              padding: "0.5rem 1rem",
-                              background: topic.lessonText
-                                ? "linear-gradient(135deg, #4299e1, #3182ce)" 
-                                : "#cbd5e0",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "6px",
-                              cursor: topic.lessonText ? "pointer" : "not-allowed",
-                              fontSize: "0.875rem",
-                              fontWeight: "600",
-                              transition: "all 0.2s",
-                              opacity: topic.lessonText ? 1 : 0.6
-                            }}
-                            onMouseEnter={(e) => {
-                              if (topic.lessonText) {
-                                e.currentTarget.style.transform = "scale(1.05)";
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = "scale(1)";
-                            }}
-                          >
-                            📖 View Lesson
-                          </button>
-                          <button
-                            onClick={() => handleToggleTopicPublish(topic.id, topic.published)}
-                            style={{
-                              padding: "0.5rem 1rem",
-                              background: topic.published 
-                                ? "linear-gradient(135deg, #48bb78, #38a169)" 
-                                : "linear-gradient(135deg, #667eea, #764ba2)",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "6px",
-                              cursor: "pointer",
-                              fontSize: "0.875rem",
-                              fontWeight: "600",
-                              transition: "all 0.2s"
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = "scale(1.05)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = "scale(1)";
-                            }}
-                          >
-                            {topic.published ? "✓ Published" : "📝 Draft"}
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Delete topic "${topic.name}"? This will also delete all its questions.`)) {
-                                handleDeleteTopic(topic.id);
-                              }
-                            }}
-                            style={{
-                              padding: "0.5rem 0.75rem",
-                              background: "linear-gradient(135deg, #f56565, #e53e3e)",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "6px",
-                              cursor: "pointer",
-                              fontSize: "0.875rem",
-                              fontWeight: "600",
-                              transition: "all 0.2s"
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = "scale(1.05)";
-                              e.currentTarget.style.background = "linear-gradient(135deg, #e53e3e, #c53030)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = "scale(1)";
-                              e.currentTarget.style.background = "linear-gradient(135deg, #f56565, #e53e3e)";
-                            }}
-                          >
-                            🗑️
-                          </button>
-                        </div>
+                        <div style={{ fontSize: "0.75rem", color: "#718096" }}>Topics</div>
                       </div>
-                      <div style={{ fontSize: "0.75rem", color: "#a0aec0" }}>
-                        Difficulty: {topic.difficulty} • {topic.questionCount || 0} questions
+                      <div style={{ width: "1px", backgroundColor: "#e2e8f0" }}></div>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: "1.5rem", fontWeight: "700", color: subject.color || "#3182ce" }}>
+                          {subject.questionCount || 0}
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: "#718096" }}>Questions</div>
                       </div>
                     </div>
-                  ))}
+                  </div>
+
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleSubjectPublish(subject.id, subject.published);
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: "0.625rem 1rem",
+                        background: subject.published 
+                          ? "linear-gradient(135deg, #48bb78, #38a169)" 
+                          : "linear-gradient(135deg, #667eea, #764ba2)",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontSize: "0.8rem",
+                        fontWeight: "600",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scale(1.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                    >
+                      {subject.published ? "✓ Published" : "📝 Draft"}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete "${subject.name}"? This will also delete all its topics and questions.`)) {
+                          handleDeleteSubject(subject.id);
+                        }
+                      }}
+                      style={{
+                        padding: "0.625rem 1rem",
+                        background: "linear-gradient(135deg, #f56565, #e53e3e)",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontSize: "0.8rem",
+                        fontWeight: "600",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scale(1.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
-              )}
-            </>
+              ))}
+            </div>
           )}
         </div>
-      </div>
+      )}
 
-      {/* Subject Form Modal */}
-      {showSubjectForm && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: "white",
-            borderRadius: "12px",
-            padding: "2rem",
-            maxWidth: "500px",
-            width: "90%"
+      {/* Topics View - Card Grid */}
+      {view === 'topics' && selectedSubject && (
+        <div style={{ marginTop: "2rem" }}>
+          <div style={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center", 
+            marginBottom: "1.5rem",
+            paddingBottom: "0.75rem",
+            borderBottom: "2px solid #e2e8f0"
           }}>
-            <h3 style={{ fontSize: "1.5rem", fontWeight: "600", marginBottom: "1.5rem" }}>Create Subject</h3>
-            <form onSubmit={handleCreateSubject}>
-              <div style={{ marginBottom: "1rem" }}>
-                <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.875rem", fontWeight: "600" }}>
-                  Subject Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={subjectForm.name}
-                  onChange={(e) => setSubjectForm({...subjectForm, name: e.target.value})}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    border: "2px solid #e2e8f0",
-                    borderRadius: "8px",
-                    fontSize: "1rem"
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: "1rem" }}>
-                <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.875rem", fontWeight: "600" }}>
-                  Description
-                </label>
-                <textarea
-                  value={subjectForm.description}
-                  onChange={(e) => setSubjectForm({...subjectForm, description: e.target.value})}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    border: "2px solid #e2e8f0",
-                    borderRadius: "8px",
-                    fontSize: "1rem",
-                    minHeight: "80px"
-                  }}
-                />
-              </div>
-              <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
-                <button
-                  type="button"
-                  onClick={() => setShowSubjectForm(false)}
-                  style={{
-                    flex: 1,
-                    padding: "0.75rem",
-                    backgroundColor: "#e2e8f0",
-                    color: "#2d3748",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontWeight: "600"
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    flex: 1,
-                    padding: "0.75rem",
-                    backgroundColor: "#3182ce",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontWeight: "600"
-                  }}
-                >
-                  Create
-                </button>
-              </div>
-            </form>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: "700", color: "#2d3748" }}>
+              📑 Topics ({topics.length})
+            </h3>
+            <button
+              onClick={() => setShowTopicForm(true)}
+              style={{
+                padding: "0.625rem 1.25rem",
+                background: "linear-gradient(135deg, #38a169, #2f855a)",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "0.875rem",
+                fontWeight: "600",
+                boxShadow: "0 4px 8px rgba(56, 161, 105, 0.3)",
+                transition: "all 0.2s"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 6px 12px rgba(56, 161, 105, 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 4px 8px rgba(56, 161, 105, 0.3)";
+              }}
+            >
+              ➕ Add Topic
+            </button>
           </div>
+
+          {topics.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "3rem", backgroundColor: "#f7f9fc", borderRadius: "12px" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📑</div>
+              <p style={{ color: "#718096" }}>No topics yet. Create your first topic!</p>
+            </div>
+          ) : (
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", 
+              gap: "1.5rem" 
+            }}>
+              {topics.map((topic) => (
+                <div
+                  key={topic.id}
+                  style={{
+                    padding: "1.75rem",
+                    backgroundColor: "#ffffff",
+                    border: "2px solid #e2e8f0",
+                    borderRadius: "14px",
+                    transition: "all 0.3s"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.borderColor = "#38a169";
+                    e.currentTarget.style.boxShadow = "0 8px 16px rgba(56, 161, 105, 0.2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.borderColor = "#e2e8f0";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <div style={{ marginBottom: "1rem" }}>
+                    <div style={{ display: "flex", alignItems: "start", gap: "1rem", marginBottom: "0.75rem" }}>
+                      <div style={{ fontSize: "2.5rem" }}>📑</div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: "1.125rem", fontWeight: "600", marginBottom: "0.5rem", color: "#2d3748" }}>
+                          {topic.name}
+                        </h4>
+                        <p style={{ fontSize: "0.875rem", color: "#718096", lineHeight: "1.5" }}>
+                          {topic.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ 
+                    display: "flex", 
+                    gap: "1rem", 
+                    padding: "0.75rem", 
+                    backgroundColor: "#f7fafc", 
+                    borderRadius: "8px",
+                    marginBottom: "1rem",
+                    fontSize: "0.75rem",
+                    color: "#718096"
+                  }}>
+                    <span>📊 Difficulty: <strong style={{ color: "#2d3748" }}>{topic.difficulty}</strong></span>
+                    <span>•</span>
+                    <span>❓ {topic.questionCount || 0} questions</span>
+                  </div>
+
+                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <button
+                      onClick={() => setViewingLesson(topic)}
+                      disabled={!topic.lessonText}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        background: topic.lessonText
+                          ? "linear-gradient(135deg, #4299e1, #3182ce)" 
+                          : "#cbd5e0",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: topic.lessonText ? "pointer" : "not-allowed",
+                        fontSize: "0.8rem",
+                        fontWeight: "600",
+                        transition: "all 0.2s",
+                        opacity: topic.lessonText ? 1 : 0.6,
+                        flex: "1 1 auto"
+                      }}
+                      onMouseEnter={(e) => {
+                        if (topic.lessonText) {
+                          e.currentTarget.style.transform = "scale(1.05)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                    >
+                      📖 View Lesson
+                    </button>
+                    <button
+                      onClick={() => handleToggleTopicPublish(topic.id, topic.published)}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        background: topic.published 
+                          ? "linear-gradient(135deg, #48bb78, #38a169)" 
+                          : "linear-gradient(135deg, #667eea, #764ba2)",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "0.8rem",
+                        fontWeight: "600",
+                        transition: "all 0.2s",
+                        flex: "1 1 auto"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scale(1.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                    >
+                      {topic.published ? "✓ Published" : "📝 Draft"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete topic "${topic.name}"? This will also delete all its questions.`)) {
+                          handleDeleteTopic(topic.id);
+                        }
+                      }}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        background: "linear-gradient(135deg, #f56565, #e53e3e)",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "0.8rem",
+                        fontWeight: "600",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scale(1.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
