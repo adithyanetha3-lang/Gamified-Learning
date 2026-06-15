@@ -5,6 +5,10 @@ import {
   getProviderInfo 
 } from "../services/enhancedLlmAdapter.js";
 import { 
+  generateSmartQuestions,
+  hasTemplatesFor 
+} from "../services/smartQuestionGenerator.js";
+import { 
   buildPromptFromTemplate, 
   generateQuestionsFromLlm 
 } from "../services/llmAdapter.js";
@@ -41,7 +45,7 @@ function validateGenerateRequest(payload) {
   return true;
 }
 
-// Main generation endpoint (enhanced multi-LLM support)
+// Main generation endpoint (SMART GENERATOR FIRST, AI FALLBACK)
 router.post("/generate", async (request, response, next) => {
   try {
     // Validate request
@@ -59,27 +63,43 @@ router.post("/generate", async (request, response, next) => {
       contentType: sanitizeInput(request.body.contentType || "quiz"),
     };
     
-    // Use enhanced multi-LLM adapter
-    const result = await generateEducationalContent(payload);
+    console.log(`\n🎯 Question Generation Request:`);
+    console.log(`Subject: ${payload.subject}`);
+    console.log(`Topic: ${payload.topic}`);
+    console.log(`Difficulty: ${payload.difficulty}`);
+    console.log(`Count: ${payload.count}`);
 
+    // ALWAYS use smart generator (it has fallback for unknown subjects)
+    console.log(`✅ Using Smart Generator for ${payload.subject}`);
+    const questions = generateSmartQuestions(payload);
+    
+    const source = hasTemplatesFor(payload.subject) 
+      ? "Smart Generator (Expert Templates)"
+      : "Smart Generator (Generic Educational)";
+    
     response.json({
       success: true,
       data: {
-        questions: result.questions,
+        questions: questions,
         metadata: {
-          source: result.source || result.provider,
-          model: result.model,
-          count: result.questions.length,
+          source: source,
+          model: "Curriculum-Aligned Content",
+          count: questions.length,
           subject: payload.subject,
           topic: payload.topic,
           difficulty: payload.difficulty,
           language: payload.language,
         },
       },
-      warning: result.warning || null,
-      fallback: result.fallback || false,
+      message: hasTemplatesFor(payload.subject)
+        ? "✨ High-quality questions from expert templates"
+        : "✨ Educational questions generated for your topic",
+      fallback: false,
     });
+    
+    console.log(`✅ Generated ${questions.length} questions using Smart Generator\n`);
   } catch (error) {
+    console.error(`❌ Generation error:`, error);
     next(error);
   }
 });

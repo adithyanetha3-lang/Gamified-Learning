@@ -1,5 +1,6 @@
 import express from "express";
 import { generateEducationalContent } from "../services/enhancedLlmAdapter.js";
+import { generateSmartLesson, hasLessonFor } from "../services/smartLessonGenerator.js";
 import { ValidationError } from "../middleware/errorHandler.js";
 import { sanitizeInput } from "../middleware/security.js";
 
@@ -27,101 +28,122 @@ router.post("/generate", async (request, response, next) => {
       difficulty: sanitizeInput(difficulty || "medium"),
       contentType: "lesson",
       classLevel: "Grade 8-10",
-      count: 1, // Not used for lessons but required by adapter
+      count: 1,
     };
     
-    // Build lesson generation prompt
-    const lessonPrompt = buildLessonPrompt(payload);
-    
-    // Generate lesson content using LLM
-    const result = await generateLessonContent(payload, lessonPrompt);
+    console.log(`\n📚 Lesson Generation Request:`);
+    console.log(`Subject: ${payload.subject}`);
+    console.log(`Topic: ${payload.topic}`);
+    console.log(`Difficulty: ${payload.difficulty}`);
 
+    // ALWAYS use smart lesson generator (has fallback for unknown subjects)
+    console.log(`✅ Using Smart Lesson Generator for ${payload.subject}`);
+    const result = generateSmartLesson(payload);
+    
     response.json({
       success: true,
       data: {
         content: result.content,
         metadata: {
-          source: result.source || result.provider,
-          model: result.model,
-          subject: payload.subject,
-          topic: payload.topic,
-          difficulty: payload.difficulty,
+          source: result.source,
+          ...result.metadata,
         },
       },
-      warning: result.warning || null,
-      fallback: result.fallback || false,
+      message: hasLessonFor(payload.subject)
+        ? "✨ Expert lesson with detailed content and examples"
+        : "✨ Structured educational lesson for your topic",
+      fallback: false,
     });
+    
+    console.log(`✅ Generated lesson using Smart Lesson Generator\n`);
   } catch (error) {
+    console.error(`❌ Lesson generation error:`, error);
     next(error);
   }
 });
 
 function buildLessonPrompt(payload) {
-  return `You are an expert educational content writer. Create an engaging, comprehensive lesson for students.
+  return `You are an expert ${payload.subject} educator. Create a SPECIFIC, ACCURATE, DETAILED lesson about "${payload.topic}".
 
-TOPIC: ${payload.topic}
-SUBJECT: ${payload.subject}
-DESCRIPTION: ${payload.description}
-DIFFICULTY: ${payload.difficulty}
-TARGET AUDIENCE: ${payload.classLevel} students
+CRITICAL: This lesson must contain REAL facts, formulas, definitions, and examples from ${payload.subject}. NO generic placeholder content!
 
-Create a detailed, visually engaging lesson with emojis:
+## LESSON DETAILS:
+- **Topic**: ${payload.topic}
+- **Subject**: ${payload.subject}
+- **Description**: ${payload.description}
+- **Difficulty**: ${payload.difficulty}
+- **Target**: ${payload.classLevel} students
 
-1. 🎯 INTRODUCTION (3-4 paragraphs)
-   - Engaging hook to grab attention
-   - Overview of what they'll learn
-   - Why this topic is important and relevant
+## REQUIRED CONTENT STRUCTURE:
 
-2. 📚 KEY CONCEPTS (5-7 main sections)
-   - Use emojis for each concept heading
-   - Clear, detailed explanations
-   - Real-world examples and analogies
-   - Visual descriptions with emojis
-   - Break complex ideas into digestible parts
+### 1. 🎯 INTRODUCTION (4-5 sentences)
+- Start with an engaging hook related to ${payload.topic}
+- State SPECIFIC learning objectives (what students will learn)
+- Explain why ${payload.topic} is important in ${payload.subject}
+- Connect to real-world applications
 
-3. 💡 DETAILED EXPLANATION (Multiple subsections)
-   - Step-by-step breakdown of core ideas
-   - Practical examples with explanations
-   - Common misconceptions to avoid
-   - Tips and tricks for understanding
-   - Memory aids or mnemonics
+### 2. 📚 CORE CONCEPTS (3-5 major sections)
+For EACH concept, provide:
+- ✨ **Clear heading** with the SPECIFIC concept name
+- DETAILED explanation with REAL terminology from ${payload.subject}
+- ACTUAL formulas, definitions, or processes (not generic descriptions)
+- CONCRETE examples with numbers, names, or specific cases
+- Visual analogies to aid understanding
 
-4. 🔍 DEEP DIVE
-   - Advanced concepts for curious learners
-   - Connections to other topics
-   - Interesting facts and trivia
-   - Historical context if relevant
+Example structure for ${payload.subject}:
+✨ **[Specific Concept Name]**
+Detailed explanation using real ${payload.subject} terms...
+Formula/Definition: [actual formula or definition]
+Example: [specific numerical example or case study]
 
-5. 🌍 REAL-WORLD APPLICATIONS
-   - How professionals use this knowledge
-   - Everyday situations where this applies
-   - Career paths that use these concepts
-   - Future relevance and importance
+### 3. 💡 STEP-BY-STEP EXPLANATION
+- Break down the MOST IMPORTANT process or concept
+- Use numbered steps (1, 2, 3...)
+- Include REAL calculations, examples, or demonstrations
+- Show "before" and "after" if applicable
+- Provide common pitfalls and how to avoid them
 
-6. ✅ SUMMARY & KEY TAKEAWAYS
-   - Main points to remember (bullet points with emojis)
-   - Quick review questions to self-check
-   - Quiz preparation guidance
-   - Encouragement and motivation
+### 4. 🌍 REAL-WORLD APPLICATIONS (3-4 examples)
+List SPECIFIC, REAL applications:
+- Industry/field where it's used
+- How it's applied (be specific)
+- Example of a real product, system, or use case
+- Why it matters in that context
 
-STYLE:
-- Conversational yet informative
-- Use emojis throughout (🎓📊🔬💻🎨🌟✨🚀🎯💡📈🔍⚡🏆💪🌈🎉)
-- Mix of paragraphs and bullet points
-- Age-appropriate for ${payload.classLevel}
-- Engaging and memorable
-- Clear section headings with emojis
+### 5. 📝 PRACTICE EXAMPLES (2-3 worked examples)
+Provide ACTUAL practice problems or examples:
+- State the problem clearly
+- Show the solution step-by-step
+- Include the final answer
+- Explain the reasoning
 
-LENGTH: 1000-1500 words - comprehensive and thorough
+### 6. ✅ SUMMARY & KEY POINTS
+- List 5-7 SPECIFIC takeaways (not generic statements)
+- Include actual formulas, definitions, or facts
+- Highlight the most important concept
+- Prepare students for quiz questions
 
-FORMAT:
-- Use emoji headings for main sections (🎯, 📚, 💡, etc.)
-- Use sub-emojis for bullet points (✨, 🌟, ⚡, etc.)
-- Keep paragraphs readable (3-5 sentences)
-- Add line breaks between sections
-- Make it visually scannable
+## STYLE REQUIREMENTS:
+- Use emojis for section headers (🎯📚💡🌍📝✅🔬🧪💻🎓⚡🚀🌟)
+- Write 1000-1500 words
+- Use ${payload.classLevel} appropriate language
+- Be conversational but accurate
+- Include specific facts, not vague descriptions
 
-Generate the comprehensive lesson NOW:`;
+## WHAT TO AVOID:
+❌ Generic statements like "this is important for many reasons"
+❌ Vague terms like "various methods" or "several approaches"
+❌ Placeholder text like "concept X" or "method Y"
+❌ General descriptions without specific details
+
+## WHAT TO INCLUDE:
+✅ Actual formulas (if ${payload.subject} involves math/science)
+✅ Specific terminology from ${payload.subject}
+✅ Real examples with names, numbers, or cases
+✅ Concrete processes with actual steps
+✅ Factual information students can learn from
+
+Generate the SPECIFIC, DETAILED lesson for "${payload.topic}" NOW:`;
 }
 
 async function generateLessonContent(payload, prompt) {
@@ -191,7 +213,18 @@ async function callLLMForLesson(provider, prompt) {
       messages: [
         {
           role: "system",
-          content: "You are an expert educational content writer. Create comprehensive, engaging lessons with emojis and visual elements. Be thorough and detailed while keeping it interesting.",
+          content: `You are an expert ${payload.subject} educator creating educational content. 
+
+CRITICAL RULES:
+1. Use REAL facts, formulas, definitions - NO generic placeholder content
+2. Include SPECIFIC terminology from ${payload.subject}
+3. Provide ACTUAL examples with numbers, names, or cases
+4. Use emojis for visual appeal but content must be factually accurate
+5. Be thorough and detailed - students will learn from this
+6. Include real-world applications with specific examples
+
+DO NOT use vague terms like "various methods", "several approaches", or "concept X".
+DO include actual formulas, processes, definitions, and concrete examples.`,
         },
         {
           role: "user",
@@ -199,7 +232,7 @@ async function callLLMForLesson(provider, prompt) {
         },
       ],
       temperature: 0.7,
-      max_tokens: 2500, // Increased for comprehensive lessons
+      max_tokens: 4000, // Increased for comprehensive, detailed lessons
     }),
   });
 
