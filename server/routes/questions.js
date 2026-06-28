@@ -69,35 +69,61 @@ router.post("/generate", async (request, response, next) => {
     console.log(`Difficulty: ${payload.difficulty}`);
     console.log(`Count: ${payload.count}`);
 
-    // ALWAYS use smart generator (it has fallback for unknown subjects)
-    console.log(`✅ Using Smart Generator for ${payload.subject}`);
-    const questions = generateSmartQuestions(payload);
+    // TRY AI-POWERED GENERATION FIRST
+    let result;
+    let usedAI = false;
     
-    const source = hasTemplatesFor(payload.subject) 
-      ? "Smart Generator (Expert Templates)"
-      : "Smart Generator (Generic Educational)";
+    try {
+      console.log(`🤖 Attempting AI generation with Groq...`);
+      result = await generateEducationalContent(payload);
+      
+      if (result.success && result.questions && result.questions.length > 0) {
+        console.log(`✅ AI generation successful: ${result.questions.length} questions`);
+        usedAI = true;
+      } else {
+        throw new Error("AI returned no questions");
+      }
+    } catch (aiError) {
+      console.warn(`⚠️ AI generation failed: ${aiError.message}`);
+      console.log(`📚 Falling back to Smart Generator`);
+      
+      // Fallback to smart generator
+      const questions = generateSmartQuestions(payload);
+      result = {
+        questions: questions,
+        source: hasTemplatesFor(payload.subject) 
+          ? "Smart Generator (Expert Templates)"
+          : "Smart Generator (Generic Educational)",
+        model: "Curriculum-Aligned Content",
+        success: true,
+      };
+      usedAI = false;
+    }
     
     response.json({
       success: true,
       data: {
-        questions: questions,
+        questions: result.questions,
         metadata: {
-          source: source,
-          model: "Curriculum-Aligned Content",
-          count: questions.length,
+          source: result.source,
+          model: result.model || "Curriculum-Aligned Content",
+          count: result.questions.length,
           subject: payload.subject,
           topic: payload.topic,
           difficulty: payload.difficulty,
           language: payload.language,
+          aiGenerated: usedAI,
         },
       },
-      message: hasTemplatesFor(payload.subject)
+      message: usedAI
+        ? `✨ AI-generated questions specific to "${payload.topic || payload.subject}"`
+        : hasTemplatesFor(payload.subject)
         ? "✨ High-quality questions from expert templates"
         : "✨ Educational questions generated for your topic",
-      fallback: false,
+      fallback: !usedAI,
     });
     
-    console.log(`✅ Generated ${questions.length} questions using Smart Generator\n`);
+    console.log(`✅ Generated ${result.questions.length} questions using ${usedAI ? 'AI' : 'Smart Generator'}\n`);
   } catch (error) {
     console.error(`❌ Generation error:`, error);
     next(error);
