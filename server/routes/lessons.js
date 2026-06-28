@@ -36,9 +36,42 @@ router.post("/generate", async (request, response, next) => {
     console.log(`Topic: ${payload.topic}`);
     console.log(`Difficulty: ${payload.difficulty}`);
 
-    // ALWAYS use smart lesson generator (has fallback for unknown subjects)
-    console.log(`✅ Using Smart Lesson Generator for ${payload.subject}`);
-    const result = generateSmartLesson(payload);
+    // TRY AI-POWERED GENERATION FIRST
+    let result;
+    let usedAI = false;
+    
+    try {
+      const provider = getConfiguredProvider();
+      if (provider) {
+        console.log(`🤖 Using AI (${provider.name}) for topic-specific lesson`);
+        const prompt = buildLessonPrompt(payload);
+        const aiResult = await callLLMForLesson(provider, prompt, payload);
+        
+        result = {
+          content: aiResult.content,
+          source: `${provider.name} AI (${provider.model})`,
+          metadata: {
+            subject: payload.subject,
+            topic: payload.topic,
+            difficulty: payload.difficulty,
+            words: aiResult.content.split(/\s+/).length,
+            type: "ai-generated-specific",
+            provider: provider.name,
+            model: provider.model
+          }
+        };
+        usedAI = true;
+      } else {
+        throw new Error("No AI provider configured");
+      }
+    } catch (aiError) {
+      console.warn(`⚠️ AI generation failed: ${aiError.message}`);
+      console.log(`📚 Falling back to Smart Lesson Generator`);
+      
+      // Fallback to smart lesson generator
+      result = generateSmartLesson(payload);
+      usedAI = false;
+    }
     
     response.json({
       success: true,
@@ -49,13 +82,15 @@ router.post("/generate", async (request, response, next) => {
           ...result.metadata,
         },
       },
-      message: hasLessonFor(payload.subject)
+      message: usedAI 
+        ? `✨ AI-generated lesson specific to "${payload.topic}"`
+        : hasLessonFor(payload.subject)
         ? "✨ Expert lesson with detailed content and examples"
         : "✨ Structured educational lesson for your topic",
-      fallback: false,
+      fallback: !usedAI,
     });
     
-    console.log(`✅ Generated lesson using Smart Lesson Generator\n`);
+    console.log(`✅ Generated lesson using ${usedAI ? 'AI' : 'Smart Lesson Generator'}\n`);
   } catch (error) {
     console.error(`❌ Lesson generation error:`, error);
     next(error);
@@ -63,87 +98,101 @@ router.post("/generate", async (request, response, next) => {
 });
 
 function buildLessonPrompt(payload) {
-  return `You are an expert ${payload.subject} educator. Create a SPECIFIC, ACCURATE, DETAILED lesson about "${payload.topic}".
+  return `You are an expert ${payload.subject} educator. Create a HIGHLY SPECIFIC, TOPIC-FOCUSED lesson about "${payload.topic}".
 
-CRITICAL: This lesson must contain REAL facts, formulas, definitions, and examples from ${payload.subject}. NO generic placeholder content!
+🎯 CRITICAL REQUIREMENTS:
+- Focus EXCLUSIVELY on "${payload.topic}" - NOT general ${payload.subject} overview
+- Include REAL facts, formulas, definitions specific to "${payload.topic}"
+- Use ACTUAL terminology and concepts from "${payload.topic}"
+- Provide CONCRETE examples that demonstrate "${payload.topic}"
+- NO generic filler - every sentence must teach something about "${payload.topic}"
 
-## LESSON DETAILS:
-- **Topic**: ${payload.topic}
-- **Subject**: ${payload.subject}
-- **Description**: ${payload.description}
-- **Difficulty**: ${payload.difficulty}
-- **Target**: ${payload.classLevel} students
+## TOPIC DETAILS:
+**Main Topic**: ${payload.topic}
+**Subject Area**: ${payload.subject}
+**Focus Description**: ${payload.description}
+**Difficulty Level**: ${payload.difficulty}
+**Student Level**: ${payload.classLevel}
 
-## REQUIRED CONTENT STRUCTURE:
+## CONTENT STRUCTURE (1200-1500 words):
 
-### 1. 🎯 INTRODUCTION (4-5 sentences)
-- Start with an engaging hook related to ${payload.topic}
-- State SPECIFIC learning objectives (what students will learn)
-- Explain why ${payload.topic} is important in ${payload.subject}
-- Connect to real-world applications
+### 1. 🎯 INTRODUCTION (100-150 words)
+- Define "${payload.topic}" specifically and clearly
+- State 3-4 SPECIFIC learning objectives for "${payload.topic}"
+- Explain why "${payload.topic}" is important (not general ${payload.subject})
+- Give a real-world example where "${payload.topic}" is used
 
-### 2. 📚 CORE CONCEPTS (3-5 major sections)
-For EACH concept, provide:
-- ✨ **Clear heading** with the SPECIFIC concept name
-- DETAILED explanation with REAL terminology from ${payload.subject}
-- ACTUAL formulas, definitions, or processes (not generic descriptions)
-- CONCRETE examples with numbers, names, or specific cases
-- Visual analogies to aid understanding
+### 2. 📚 CORE CONCEPTS OF "${payload.topic}" (600-800 words, 3-5 sections)
+Each section must focus on a SPECIFIC aspect of "${payload.topic}":
 
-Example structure for ${payload.subject}:
-✨ **[Specific Concept Name]**
-Detailed explanation using real ${payload.subject} terms...
-Formula/Definition: [actual formula or definition]
-Example: [specific numerical example or case study]
+✨ **[Specific Concept 1 Name]**
+- Clear definition with precise terminology
+- Detailed explanation (how it works, why it matters)
+- Include formula/process/method if applicable
+- Example with actual values/names/cases
+- Connection to "${payload.topic}" overall
 
-### 3. 💡 STEP-BY-STEP EXPLANATION
-- Break down the MOST IMPORTANT process or concept
+✨ **[Specific Concept 2 Name]**
+- Technical details and specifics
+- Step-by-step process if applicable
+- Real calculation or demonstration
+- Common applications within "${payload.topic}"
+
+(Continue for 3-5 key concepts...)
+
+### 3. 💡 HOW "${payload.topic}" WORKS (250-300 words)
+- Step-by-step breakdown of the main process/principle
 - Use numbered steps (1, 2, 3...)
-- Include REAL calculations, examples, or demonstrations
-- Show "before" and "after" if applicable
-- Provide common pitfalls and how to avoid them
+- Include specific examples with numbers or cases
+- Show a worked example from start to finish
+- Highlight common mistakes related to "${payload.topic}"
 
-### 4. 🌍 REAL-WORLD APPLICATIONS (3-4 examples)
-List SPECIFIC, REAL applications:
-- Industry/field where it's used
-- How it's applied (be specific)
-- Example of a real product, system, or use case
-- Why it matters in that context
+### 4. 🌍 APPLICATIONS OF "${payload.topic}" (150-200 words)
+List 3-4 SPECIFIC, REAL applications:
+- **[Specific Industry/Field]**: How "${payload.topic}" is used here
+- **[Real Technology/System]**: Actual example with name
+- **[Practical Use Case]**: Concrete scenario demonstrating "${payload.topic}"
+- Why "${payload.topic}" is essential in each context
 
-### 5. 📝 PRACTICE EXAMPLES (2-3 worked examples)
-Provide ACTUAL practice problems or examples:
-- State the problem clearly
-- Show the solution step-by-step
-- Include the final answer
-- Explain the reasoning
+### 5. 📝 PRACTICE PROBLEM (100-150 words)
+Provide ONE worked example:
+- State clear problem related to "${payload.topic}"
+- Show solution steps
+- Explain reasoning at each step
+- Give final answer
+- Note what concept from "${payload.topic}" was applied
 
-### 6. ✅ SUMMARY & KEY POINTS
-- List 5-7 SPECIFIC takeaways (not generic statements)
-- Include actual formulas, definitions, or facts
-- Highlight the most important concept
-- Prepare students for quiz questions
+### 6. ✅ SUMMARY (100-150 words)
+- List 5-7 KEY FACTS specifically about "${payload.topic}"
+- Include most important formula/definition/principle
+- Highlight what makes "${payload.topic}" unique
+- Preparation tips for quiz on "${payload.topic}"
 
-## STYLE REQUIREMENTS:
-- Use emojis for section headers (🎯📚💡🌍📝✅🔬🧪💻🎓⚡🚀🌟)
-- Write 1000-1500 words
-- Use ${payload.classLevel} appropriate language
-- Be conversational but accurate
-- Include specific facts, not vague descriptions
+## QUALITY STANDARDS:
 
-## WHAT TO AVOID:
-❌ Generic statements like "this is important for many reasons"
-❌ Vague terms like "various methods" or "several approaches"
-❌ Placeholder text like "concept X" or "method Y"
-❌ General descriptions without specific details
+✅ MUST INCLUDE:
+- Specific terminology from "${payload.topic}"
+- Actual formulas, definitions, or processes (if applicable)
+- Real examples with names, numbers, or specific cases
+- Technical accuracy - verify all facts about "${payload.topic}"
+- Clear focus on "${payload.topic}" throughout (not wandering to general ${payload.subject})
 
-## WHAT TO INCLUDE:
-✅ Actual formulas (if ${payload.subject} involves math/science)
-✅ Specific terminology from ${payload.subject}
-✅ Real examples with names, numbers, or cases
-✅ Concrete processes with actual steps
-✅ Factual information students can learn from
+❌ MUST AVOID:
+- Generic statements applicable to any topic
+- Vague terms like "various methods", "several types", "different approaches"
+- Talking about ${payload.subject} in general instead of "${payload.topic}"
+- Filler content that doesn't teach about "${payload.topic}"
+- Placeholder text like "concept X", "method Y", "formula Z"
 
-Generate the SPECIFIC, DETAILED lesson for "${payload.topic}" NOW:`;
+## STYLE:
+- Use emojis for headers (🎯📚💡🌍📝✅🔬💻⚡🚀)
+- Write for ${payload.classLevel} students
+- Be conversational but academically accurate
+- Include analogies to aid understanding
+- Make it engaging but information-dense
+
+Generate the lesson for "${payload.topic}" NOW (focus ONLY on this topic, not general ${payload.subject}):`;
+}
 }
 
 async function generateLessonContent(payload, prompt) {
@@ -201,7 +250,7 @@ function getConfiguredProvider() {
   return null;
 }
 
-async function callLLMForLesson(provider, prompt) {
+async function callLLMForLesson(provider, prompt, payload) {
   const response = await fetch(provider.endpoint, {
     method: "POST",
     headers: {
@@ -213,35 +262,46 @@ async function callLLMForLesson(provider, prompt) {
       messages: [
         {
           role: "system",
-          content: `You are an expert ${payload.subject} educator creating educational content. 
+          content: `You are a highly knowledgeable ${payload.subject} educator with expertise in "${payload.topic}".
+
+YOUR MISSION: Create a focused, accurate lesson SPECIFICALLY about "${payload.topic}" - NOT a general overview of ${payload.subject}.
 
 CRITICAL RULES:
-1. Use REAL facts, formulas, definitions - NO generic placeholder content
-2. Include SPECIFIC terminology from ${payload.subject}
-3. Provide ACTUAL examples with numbers, names, or cases
-4. Use emojis for visual appeal but content must be factually accurate
-5. Be thorough and detailed - students will learn from this
-6. Include real-world applications with specific examples
+1. FOCUS EXCLUSIVELY on "${payload.topic}" - every paragraph must relate directly to this specific topic
+2. Use REAL facts, formulas, definitions that are specific to "${payload.topic}"
+3. Include SPECIFIC terminology from "${payload.topic}" (not general ${payload.subject} terms)
+4. Provide ACTUAL examples that demonstrate "${payload.topic}" principles
+5. Be technically accurate - students will learn and be tested on this content
+6. Include real-world applications where "${payload.topic}" is actually used
+7. NO generic filler content - every sentence must teach something specific
 
-DO NOT use vague terms like "various methods", "several approaches", or "concept X".
-DO include actual formulas, processes, definitions, and concrete examples.`,
+TOPIC FOCUS: "${payload.topic}"
+DESCRIPTION: ${payload.description}
+
+You are writing for ${payload.classLevel} students who need to learn "${payload.topic}" specifically, not ${payload.subject} in general.`,
         },
         {
           role: "user",
           content: prompt,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 4000, // Increased for comprehensive, detailed lessons
+      temperature: 0.6, // Lower for more focused, accurate content
+      max_tokens: 4000,
+      top_p: 0.9,
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`LLM API error: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`LLM API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content || "";
+  
+  if (!content || content.length < 500) {
+    throw new Error("AI generated insufficient content");
+  }
   
   return { content };
 }
