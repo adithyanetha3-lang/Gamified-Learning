@@ -6,96 +6,89 @@ import { sanitizeInput } from "../middleware/security.js";
 
 const router = express.Router();
 
-// Generate lesson content endpoint
-router.post("/generate", async (request, response, next) => {
-  try {
-    // Validate request
-    const { subject, topic, description, difficulty } = request.body;
-    
-    if (!topic || typeof topic !== "string") {
-      throw new ValidationError("Topic is required", ["topic is required"]);
-    }
-    
-    if (!description || typeof description !== "string") {
-      throw new ValidationError("Description is required", ["description is required"]);
-    }
-    
-    // Sanitize inputs
-    const payload = {
-      subject: sanitizeInput(subject || "General"),
-      topic: sanitizeInput(topic),
-      description: sanitizeInput(description),
-      difficulty: sanitizeInput(difficulty || "medium"),
-      contentType: "lesson",
-      classLevel: "Grade 8-10",
-      count: 1,
-    };
-    
-    console.log(`\n📚 Lesson Generation Request:`);
-    console.log(`Subject: ${payload.subject}`);
-    console.log(`Topic: ${payload.topic}`);
-    console.log(`Difficulty: ${payload.difficulty}`);
+// ========================================
+// HELPER FUNCTIONS (defined before use)
+// ========================================
 
-    // TRY AI-POWERED GENERATION FIRST
-    let result;
-    let usedAI = false;
-    
-    try {
-      const provider = getConfiguredProvider();
-      if (provider) {
-        console.log(`🤖 Using AI (${provider.name}) for topic-specific lesson`);
-        const prompt = buildLessonPrompt(payload);
-        const aiResult = await callLLMForLesson(provider, prompt, payload);
-        
-        result = {
-          content: aiResult.content,
-          source: `${provider.name} AI (${provider.model})`,
-          metadata: {
-            subject: payload.subject,
-            topic: payload.topic,
-            difficulty: payload.difficulty,
-            words: aiResult.content.split(/\s+/).length,
-            type: "ai-generated-specific",
-            provider: provider.name,
-            model: provider.model
-          }
-        };
-        usedAI = true;
-      } else {
-        throw new Error("No AI provider configured");
-      }
-    } catch (aiError) {
-      console.warn(`⚠️ AI generation failed: ${aiError.message}`);
-      console.log(`📚 Falling back to Smart Lesson Generator`);
-      
-      // Fallback to smart lesson generator
-      result = generateSmartLesson(payload);
-      usedAI = false;
-    }
-    
-    response.json({
-      success: true,
-      data: {
-        content: result.content,
-        metadata: {
-          source: result.source,
-          ...result.metadata,
-        },
-      },
-      message: usedAI 
-        ? `✨ AI-generated lesson specific to "${payload.topic}"`
-        : hasLessonFor(payload.subject)
-        ? "✨ Expert lesson with detailed content and examples"
-        : "✨ Structured educational lesson for your topic",
-      fallback: !usedAI,
-    });
-    
-    console.log(`✅ Generated lesson using ${usedAI ? 'AI' : 'Smart Lesson Generator'}\n`);
-  } catch (error) {
-    console.error(`❌ Lesson generation error:`, error);
-    next(error);
+function getConfiguredProvider() {
+  // Check for Groq first (free and fast)
+  if (process.env.GROQ_API_KEY && !process.env.GROQ_API_KEY.includes("your_")) {
+    return {
+      name: "Groq",
+      apiKey: process.env.GROQ_API_KEY,
+      model: process.env.GROQ_MODEL || "llama-3.1-70b-versatile",
+      endpoint: "https://api.groq.com/openai/v1/chat/completions",
+    };
   }
-});
+  
+  // Check other providers
+  if (process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.includes("your_")) {
+    return {
+      name: "OpenAI",
+      apiKey: process.env.OPENAI_API_KEY,
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      endpoint: "https://api.openai.com/v1/chat/completions",
+    };
+  }
+  
+  return null;
+}
+
+async function callLLMForLesson(provider, prompt, payload) {
+  const response = await fetch(provider.endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${provider.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: provider.model,
+      messages: [
+        {
+          role: "system",
+          content: `You are a highly knowledgeable ${payload.subject} educator with expertise in "${payload.topic}".
+
+YOUR MISSION: Create a focused, accurate lesson SPECIFICALLY about "${payload.topic}" - NOT a general overview of ${payload.subject}.
+
+CRITICAL RULES:
+1. FOCUS EXCLUSIVELY on "${payload.topic}" - every paragraph must relate directly to this specific topic
+2. Use REAL facts, formulas, definitions that are specific to "${payload.topic}"
+3. Include SPECIFIC terminology from "${payload.topic}" (not general ${payload.subject} terms)
+4. Provide ACTUAL examples that demonstrate "${payload.topic}" principles
+5. Be technically accurate - students will learn and be tested on this content
+6. Include real-world applications where "${payload.topic}" is actually used
+7. NO generic filler content - every sentence must teach something specific
+
+TOPIC FOCUS: "${payload.topic}"
+DESCRIPTION: ${payload.description}
+
+You are writing for ${payload.classLevel} students who need to learn "${payload.topic}" specifically, not ${payload.subject} in general.`,
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.6, // Lower for more focused, accurate content
+      max_tokens: 4000,
+      top_p: 0.9,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`LLM API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || "";
+  
+  if (!content || content.length < 500) {
+    throw new Error("AI generated insufficient content");
+  }
+  
+  return { content };
+}
 
 function buildLessonPrompt(payload) {
   return `You are an expert ${payload.subject} educator. Create a HIGHLY SPECIFIC, TOPIC-FOCUSED lesson about "${payload.topic}".
@@ -193,118 +186,101 @@ Provide ONE worked example:
 
 Generate the lesson for "${payload.topic}" NOW (focus ONLY on this topic, not general ${payload.subject}):`;
 }
-}
 
-async function generateLessonContent(payload, prompt) {
+// ========================================
+// ROUTE HANDLERS
+// ========================================
+
+// Generate lesson content endpoint
+router.post("/generate", async (request, response, next) => {
   try {
-    // Try to use the LLM adapter
-    const config = await import("../services/enhancedLlmAdapter.js");
-    const provider = getConfiguredProvider();
+    // Validate request
+    const { subject, topic, description, difficulty } = request.body;
     
-    if (!provider) {
-      console.warn("No LLM configured, generating mock lesson");
-      return createMockLesson(payload);
+    if (!topic || typeof topic !== "string") {
+      throw new ValidationError("Topic is required", ["topic is required"]);
     }
     
-    // Call LLM with lesson prompt
-    const response = await callLLMForLesson(provider, prompt);
+    if (!description || typeof description !== "string") {
+      throw new ValidationError("Description is required", ["description is required"]);
+    }
     
-    return {
-      content: response.content,
-      source: provider.name,
-      model: provider.model,
-      provider: provider.name,
+    // Sanitize inputs
+    const payload = {
+      subject: sanitizeInput(subject || "General"),
+      topic: sanitizeInput(topic),
+      description: sanitizeInput(description),
+      difficulty: sanitizeInput(difficulty || "medium"),
+      contentType: "lesson",
+      classLevel: "Grade 8-10",
+      count: 1,
+    };
+    
+    console.log(`\n📚 Lesson Generation Request:`);
+    console.log(`Subject: ${payload.subject}`);
+    console.log(`Topic: ${payload.topic}`);
+    console.log(`Difficulty: ${payload.difficulty}`);
+
+    // TRY AI-POWERED GENERATION FIRST
+    let result;
+    let usedAI = false;
+    
+    try {
+      const provider = getConfiguredProvider();
+      if (provider) {
+        console.log(`🤖 Using AI (${provider.name}) for topic-specific lesson`);
+        const prompt = buildLessonPrompt(payload);
+        const aiResult = await callLLMForLesson(provider, prompt, payload);
+        
+        result = {
+          content: aiResult.content,
+          source: `${provider.name} AI (${provider.model})`,
+          metadata: {
+            subject: payload.subject,
+            topic: payload.topic,
+            difficulty: payload.difficulty,
+            words: aiResult.content.split(/\s+/).length,
+            type: "ai-generated-specific",
+            provider: provider.name,
+            model: provider.model
+          }
+        };
+        usedAI = true;
+      } else {
+        throw new Error("No AI provider configured");
+      }
+    } catch (aiError) {
+      console.warn(`⚠️ AI generation failed: ${aiError.message}`);
+      console.log(`📚 Falling back to Smart Lesson Generator`);
+      
+      // Fallback to smart lesson generator
+      result = generateSmartLesson(payload);
+      usedAI = false;
+    }
+    
+    response.json({
       success: true,
-    };
+      data: {
+        content: result.content,
+        metadata: {
+          source: result.source,
+          ...result.metadata,
+        },
+      },
+      message: usedAI 
+        ? `✨ AI-generated lesson specific to "${payload.topic}"`
+        : hasLessonFor(payload.subject)
+        ? "✨ Expert lesson with detailed content and examples"
+        : "✨ Structured educational lesson for your topic",
+      fallback: !usedAI,
+    });
+    
+    console.log(`✅ Generated lesson using ${usedAI ? 'AI' : 'Smart Lesson Generator'}\n`);
   } catch (error) {
-    console.error("Error generating lesson:", error);
-    return {
-      ...createMockLesson(payload),
-      error: error.message,
-      fallback: true,
-    };
+    console.error(`❌ Lesson generation error:`, error);
+    next(error);
   }
-}
-
-function getConfiguredProvider() {
-  // Check for Groq first (free and fast)
-  if (process.env.GROQ_API_KEY && !process.env.GROQ_API_KEY.includes("your_")) {
-    return {
-      name: "Groq",
-      apiKey: process.env.GROQ_API_KEY,
-      model: process.env.GROQ_MODEL || "llama-3.1-70b-versatile",
-      endpoint: "https://api.groq.com/openai/v1/chat/completions",
-    };
-  }
-  
-  // Check other providers
-  if (process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.includes("your_")) {
-    return {
-      name: "OpenAI",
-      apiKey: process.env.OPENAI_API_KEY,
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      endpoint: "https://api.openai.com/v1/chat/completions",
-    };
-  }
-  
-  return null;
-}
-
-async function callLLMForLesson(provider, prompt, payload) {
-  const response = await fetch(provider.endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${provider.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: provider.model,
-      messages: [
-        {
-          role: "system",
-          content: `You are a highly knowledgeable ${payload.subject} educator with expertise in "${payload.topic}".
-
-YOUR MISSION: Create a focused, accurate lesson SPECIFICALLY about "${payload.topic}" - NOT a general overview of ${payload.subject}.
-
-CRITICAL RULES:
-1. FOCUS EXCLUSIVELY on "${payload.topic}" - every paragraph must relate directly to this specific topic
-2. Use REAL facts, formulas, definitions that are specific to "${payload.topic}"
-3. Include SPECIFIC terminology from "${payload.topic}" (not general ${payload.subject} terms)
-4. Provide ACTUAL examples that demonstrate "${payload.topic}" principles
-5. Be technically accurate - students will learn and be tested on this content
-6. Include real-world applications where "${payload.topic}" is actually used
-7. NO generic filler content - every sentence must teach something specific
-
-TOPIC FOCUS: "${payload.topic}"
-DESCRIPTION: ${payload.description}
-
-You are writing for ${payload.classLevel} students who need to learn "${payload.topic}" specifically, not ${payload.subject} in general.`,
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      temperature: 0.6, // Lower for more focused, accurate content
-      max_tokens: 4000,
-      top_p: 0.9,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`LLM API error: ${response.status} - ${errorText}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || "";
-  
-  if (!content || content.length < 500) {
-    throw new Error("AI generated insufficient content");
-  }
-  
-  return { content };
-}
+});
 
 function createMockLesson(payload) {
   const content = `🎯 ${payload.topic}
