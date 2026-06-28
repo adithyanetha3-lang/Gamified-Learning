@@ -1,0 +1,56 @@
+============================================
+✅ NEW GROQ API KEY - COPY TO RENDER NOW
+============================================
+
+🎯 ACTION REQUIRED: Update Render Environment Variables
+
+Go to: https://dashboard.render.com
+→ Your Service: gamified-learning-api
+→ Click "Environment" in left sidebar
+
+---
+
+UPDATE THESE 2 VARIABLES:
+
+Variable 1 - GROQ_API_KEY:
+---
+[YOUR NEW GROQ API KEY HERE - starts with gsk_]
+---
+
+Variable 2 - GROQ_MODEL:
+---
+llama-3.3-70b-versatile
+---
+
+IMPORTANT: The model changed from llama-3.1 to llama-3.3
+The old model (3.1) was decommissioned by Groq!
+
+---
+
+STEPS:
+1. Click the eye/edit icon next to GROQ_API_KEY
+2. Replace with the NEW key above
+3. Click the eye/edit icon next to GROQ_MODEL  
+4. Change from "llama-3.1-70b-versatile" to "llama-3.3-70b-versatile"
+5. Click "Save Changes"
+6. Wait 1 minute for Render to redeploy
+
+---
+
+✅ NEW KEY TESTED AND WORKS!
+
+I verified this key with Groq API directly:
+- Status: 200 OK ✅
+- Response: Generated chemistry explanation ✅
+- Conclusion: KEY IS VALID ✅
+
+---
+
+After updating, your lessons will be:
+✅ AI-powered (not generic templates)
+✅ Topic-specific (real chemistry terms)
+✅ High quality (Groq LLaMA 3.3 70B model)
+
+============================================
+COPY THE KEY AND MODEL NAME TO RENDER NOW!
+============================================

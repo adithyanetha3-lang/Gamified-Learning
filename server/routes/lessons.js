@@ -11,12 +11,23 @@ const router = express.Router();
 // ========================================
 
 function getConfiguredProvider() {
-  // Check for Groq first (free and fast)
+  // Check for Google Gemini first (FREE and reliable)
+  if (process.env.GOOGLE_API_KEY && !process.env.GOOGLE_API_KEY.includes("your_")) {
+    return {
+      name: "Google Gemini",
+      apiKey: process.env.GOOGLE_API_KEY,
+      model: process.env.GOOGLE_MODEL || "gemini-1.5-flash",
+      endpoint: `https://generativelanguage.googleapis.com/v1beta/models`,
+      useGeminiFormat: true,
+    };
+  }
+  
+  // Check for Groq (free and fast)
   if (process.env.GROQ_API_KEY && !process.env.GROQ_API_KEY.includes("your_")) {
     return {
       name: "Groq",
       apiKey: process.env.GROQ_API_KEY,
-      model: process.env.GROQ_MODEL || "llama-3.1-70b-versatile",
+      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
       endpoint: "https://api.groq.com/openai/v1/chat/completions",
     };
   }

@@ -1,0 +1,31 @@
+============================================
+COPY-PASTE THESE TO RENDER ENVIRONMENT
+============================================
+
+Go to: Render Dashboard → Your Service → Environment
+
+Then add these 2 variables:
+
+---
+Variable 1:
+---
+Key:
+GROQ_API_KEY
+
+Value:
+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
+
+---
+Variable 2:
+---
+Key:
+GROQ_MODEL
+
+Value:
+llama-3.3-70b-versatile
+
+---
+
+Then click "Save Changes" and wait 1 minute!
+
+============================================
